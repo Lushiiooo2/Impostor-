@@ -98,13 +98,21 @@
       "Banco", "Hotel", "Museo", "Zoológico", "Crucero", "Submarino", "Estación Espacial"
     ];
 
+    // Identificador persistente por cliente
+    let clientUUID = localStorage.getItem('impostor_client_id');
+    if (!clientUUID) {
+      clientUUID = 'user_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('impostor_client_id', clientUUID);
+    }
+
     let peer = null;
     let myName = "";
     let isHost = false;
     let roomCode = "";
-    let connections = [];
+    let connections = new Map(); // uuid -> conn
     let hostConn = null;
-    let players = [];
+    let players = [];            // [{ uuid, name }]
+    let heartbeatInterval = null;
 
     function notify(text, isError = false) {
       const msg = document.getElementById('statusMessage');
@@ -136,6 +144,7 @@
       document.getElementById('screen-join').classList.remove('hidden');
     }
 
+    // CREAR SALA (HOST)
     function createRoom() {
       const name = document.getElementById('playerName').value.trim();
       if (!name) return alert("Por favor ingresa tu nombre");
@@ -154,40 +163,60 @@
 
       peer = new Peer(peerId, {
         debug: 1,
-        config: {
-          iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-        }
+        config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
       });
 
       peer.on('open', () => {
         clearNotify();
         btn.disabled = false;
         btn.innerText = "Crear Sala";
-        players = [{ id: peer.id, name: myName }];
+        players = [{ uuid: clientUUID, name: myName }];
         document.getElementById('screen-home').classList.add('hidden');
         document.getElementById('screen-lobby').classList.remove('hidden');
         document.getElementById('displayRoomCode').innerText = roomCode;
         document.getElementById('hostControls').classList.remove('hidden');
         document.getElementById('guestWaiting').classList.add('hidden');
         renderPlayers();
+        startHeartbeat();
       });
 
       peer.on('connection', (conn) => {
+        let senderUUID = null;
+
         conn.on('data', (data) => {
           if (data.type === 'JOIN') {
-            connections.push(conn);
-            players.push({ id: conn.peer, name: data.name });
+            senderUUID = data.uuid;
+            
+            // Cerrar conexión anterior si existía para ese mismo usuario
+            if (connections.has(senderUUID)) {
+              try { connections.get(senderUUID).close(); } catch (e) {}
+            }
+            connections.set(senderUUID, conn);
+
+            // Evitar duplicados por UUID
+            const existingIndex = players.findIndex(p => p.uuid === senderUUID);
+            if (existingIndex !== -1) {
+              players[existingIndex].name = data.name; // Actualiza nombre si cambió
+            } else {
+              players.push({ uuid: senderUUID, name: data.name });
+            }
+
             renderPlayers();
             broadcastLobby();
           }
         });
 
-        conn.on('close', () => {
-          players = players.filter(p => p.id !== conn.peer);
-          connections = connections.filter(c => c.peer !== conn.peer);
-          renderPlayers();
-          broadcastLobby();
-        });
+        const handleDisconnect = () => {
+          if (senderUUID && connections.get(senderUUID) === conn) {
+            connections.delete(senderUUID);
+            players = players.filter(p => p.uuid !== senderUUID);
+            renderPlayers();
+            broadcastLobby();
+          }
+        };
+
+        conn.on('close', handleDisconnect);
+        conn.on('error', handleDisconnect);
       });
 
       peer.on('error', (err) => {
@@ -201,6 +230,26 @@
       });
     }
 
+    // Ping para limpiar conexiones muertas silenciosas en móviles
+    function startHeartbeat() {
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
+      heartbeatInterval = setInterval(() => {
+        let changed = false;
+        connections.forEach((conn, uuid) => {
+          if (!conn.open) {
+            connections.delete(uuid);
+            players = players.filter(p => p.uuid !== uuid);
+            changed = true;
+          }
+        });
+        if (changed) {
+          renderPlayers();
+          broadcastLobby();
+        }
+      }, 3000);
+    }
+
+    // UNIRSE A SALA (GUEST)
     function joinRoom() {
       const code = document.getElementById('roomCodeInput').value.trim();
       if (code.length !== 4) return alert("Ingresa un código de 4 dígitos");
@@ -215,9 +264,7 @@
 
       peer = new Peer(null, {
         debug: 1,
-        config: {
-          iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-        }
+        config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
       });
 
       peer.on('open', () => {
@@ -227,7 +274,7 @@
           clearNotify();
           btn.disabled = false;
           btn.innerText = "Entrar a la Sala";
-          hostConn.send({ type: 'JOIN', name: myName });
+          hostConn.send({ type: 'JOIN', uuid: clientUUID, name: myName });
           document.getElementById('screen-join').classList.add('hidden');
           document.getElementById('screen-lobby').classList.remove('hidden');
           document.getElementById('displayRoomCode').innerText = roomCode;
@@ -245,11 +292,13 @@
           }
         });
 
-        hostConn.on('error', () => {
-          btn.disabled = false;
-          btn.innerText = "Entrar a la Sala";
-          notify("No se encontró la sala " + roomCode + ". Revisa el código.", true);
-        });
+        const onHostDisconnect = () => {
+          notify("Se perdió la conexión con el anfitrión.", true);
+          setTimeout(() => showHomeScreen(), 2000);
+        };
+
+        hostConn.on('close', onHostDisconnect);
+        hostConn.on('error', onHostDisconnect);
       });
 
       peer.on('error', (err) => {
@@ -265,31 +314,35 @@
       players.forEach(p => {
         const li = document.createElement('li');
         li.className = "flex items-center justify-between bg-slate-700/60 px-3 py-2 rounded-lg text-sm";
-        const isLeader = p.id === players[0]?.id;
-        li.innerHTML = `<span>${p.name}</span>` + (isLeader ? `<span class="text-[10px] bg-amber-400 text-slate-900 px-2 py-0.5 rounded font-bold uppercase">Líder</span>` : "");
+        const isLeader = p.uuid === players[0]?.uuid;
+        li.innerHTML = `<span>${p.name}</span>` + (isLeader ? `<span class="text-[10px] bg-amber-400 text-slate-950 px-2 py-0.5 rounded font-bold uppercase">Líder</span>` : "");
         list.appendChild(li);
       });
       document.getElementById('playerCount').innerText = players.length;
     }
 
     function broadcastLobby() {
-      connections.forEach(c => {
-        if (c.open) c.send({ type: 'UPDATE_PLAYERS', players });
+      connections.forEach((conn) => {
+        if (conn.open) conn.send({ type: 'UPDATE_PLAYERS', players });
       });
     }
 
     function startGame() {
+      if (players.length < 3) {
+        if (!confirm("Hay menos de 3 jugadores. ¿Quieres iniciar de todas formas para probar?")) return;
+      }
+
       const secretWord = WORDS[Math.floor(Math.random() * WORDS.length)];
       const impostorIndex = Math.floor(Math.random() * players.length);
 
       players.forEach((p, index) => {
         const isImpostor = (index === impostorIndex);
-        if (p.id === peer.id) {
+        if (p.uuid === clientUUID) {
           showRole(isImpostor, secretWord);
         } else {
-          const c = connections.find(conn => conn.peer === p.id);
-          if (c && c.open) {
-            c.send({ type: 'START_GAME', isImpostor, word: secretWord });
+          const conn = connections.get(p.uuid);
+          if (conn && conn.open) {
+            conn.send({ type: 'START_GAME', isImpostor, word: secretWord });
           }
         }
       });
@@ -319,8 +372,8 @@
     }
 
     function resetGame() {
-      connections.forEach(c => {
-        if (c.open) c.send({ type: 'RESET' });
+      connections.forEach((conn) => {
+        if (conn.open) conn.send({ type: 'RESET' });
       });
       document.getElementById('screen-role').classList.add('hidden');
       document.getElementById('screen-lobby').classList.remove('hidden');
