@@ -2,382 +2,794 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>El Impostor - Multijugador</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>El Impostor - Multiplayer</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <style>
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(0.98); }
+    }
+    .animate-pulse-subtle { animation: pulse-subtle 2s infinite ease-in-out; }
+    .prevent-select { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  </style>
 </head>
-<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-4 font-sans select-none">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-3 font-sans prevent-select">
 
-  <div class="max-w-md w-full bg-slate-800 rounded-2xl p-6 shadow-2xl border border-slate-700">
-    <h1 class="text-3xl font-extrabold text-center text-amber-400 mb-2 tracking-wide">🕵️ EL IMPOSTOR</h1>
-    <p class="text-center text-slate-400 text-sm mb-6">Juego multijugador en tiempo real</p>
+  <!-- CONTENEDOR PRINCIPAL -->
+  <main class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl relative overflow-hidden backdrop-blur-xl">
 
-    <!-- MENSAJE DE ESTADO / ERROR -->
-    <div id="statusMessage" class="hidden mb-4 p-3 rounded-lg text-sm text-center font-medium"></div>
+    <!-- CABECERA -->
+    <header class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">🕵️‍♂️</span>
+        <h1 class="text-xl font-black tracking-wider text-amber-400">EL IMPOSTOR</h1>
+      </div>
+      <div id="connBadge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs font-medium text-slate-400">
+        <span id="connDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+        <span id="connStatus">Listo</span>
+      </div>
+    </header>
 
-    <!-- PANTALLA 1: INICIO -->
-    <div id="screen-home" class="space-y-4">
+    <!-- NOTIFICACIONES TOAST -->
+    <div id="toast" class="hidden mb-3 p-3 rounded-xl text-xs font-semibold text-center transition-all"></div>
+
+    <!-- ==================== VISTA 1: INICIO ==================== -->
+    <section id="view-home" class="space-y-4">
       <div>
-        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Tu Nombre</label>
-        <input id="playerName" type="text" placeholder="Ej: Felipe" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-amber-400">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tu Apodo</label>
+        <input id="inputName" type="text" maxlength="14" placeholder="Ej: Felipe" class="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-xl px-4 py-3 text-white text-base focus:outline-none transition">
       </div>
 
-      <div class="grid grid-cols-2 gap-3 pt-2">
-        <button id="btnCreate" onclick="createRoom()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
-          Crear Sala
+      <div class="grid grid-cols-2 gap-3 pt-1">
+        <button onclick="uiCreateRoom()" class="w-full bg-amber-500 active:bg-amber-600 text-slate-950 font-black py-3.5 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition">
+          CREAR SALA
         </button>
-        <button onclick="showJoinScreen()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg transition active:scale-95">
-          Unirse
+        <button onclick="uiShowJoin()" class="w-full bg-slate-800 active:bg-slate-700 text-white font-bold py-3.5 rounded-xl border border-slate-700 active:scale-95 transition">
+          UNIRSE
         </button>
       </div>
-    </div>
 
-    <!-- PANTALLA 2: UNIRSE A SALA -->
-    <div id="screen-join" class="space-y-4 hidden">
+      <div class="pt-3 border-t border-slate-800/80 text-center">
+        <p class="text-[11px] text-slate-500">Ideal para jugar en reuniones o por videollamada</p>
+      </div>
+    </section>
+
+    <!-- ==================== VISTA 2: UNIRSE ==================== -->
+    <section id="view-join" class="space-y-4 hidden">
       <div>
-        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Código de Sala (4 dígitos)</label>
-        <input id="roomCodeInput" type="number" placeholder="Ej: 4821" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-center text-2xl font-mono tracking-widest text-white focus:outline-none focus:border-amber-400">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Código de 4 dígitos</label>
+        <input id="inputCode" type="tel" maxlength="4" placeholder="••••" class="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-xl py-3 text-center text-3xl font-mono tracking-widest text-amber-400 focus:outline-none transition">
       </div>
-      <button id="btnJoin" onclick="joinRoom()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
-        Entrar a la Sala
+      <button onclick="uiJoinRoom()" class="w-full bg-emerald-500 active:bg-emerald-600 text-slate-950 font-black py-3.5 rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition">
+        ENTRAR AHORA
       </button>
-      <button onclick="showHomeScreen()" class="w-full text-slate-400 text-sm py-2 hover:underline">
-        ← Volver
+      <button onclick="uiShowHome()" class="w-full text-slate-400 text-xs py-2 hover:text-white">
+        ← Volver al inicio
       </button>
-    </div>
+    </section>
 
-    <!-- PANTALLA 3: SALA DE ESPERA (LOBBY) -->
-    <div id="screen-lobby" class="space-y-5 hidden">
-      <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 text-center">
-        <p class="text-xs text-slate-400 uppercase font-semibold mb-1">Comparte este Código</p>
-        <div id="displayRoomCode" class="text-4xl font-black font-mono tracking-widest text-amber-400">----</div>
-      </div>
-
-      <div>
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Jugadores conectados (<span id="playerCount">1</span>)</h3>
-        <ul id="playersList" class="space-y-2 max-h-48 overflow-y-auto pr-1"></ul>
-      </div>
-
-      <div id="hostControls" class="hidden">
-        <button onclick="startGame()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
-          ¡Iniciar Partida!
-        </button>
-      </div>
-      <div id="guestWaiting" class="text-center text-sm text-amber-400/80 animate-pulse font-medium">
-        Esperando que el anfitrión inicie...
-      </div>
-    </div>
-
-    <!-- PANTALLA 4: ROL ASIGNADO -->
-    <div id="screen-role" class="space-y-5 hidden text-center">
-      <div class="py-4">
-        <p class="text-sm uppercase tracking-widest text-slate-400 font-bold mb-2">Tu Rol Secreto</p>
+    <!-- ==================== VISTA 3: LOBBY ==================== -->
+    <section id="view-lobby" class="space-y-4 hidden">
+      <!-- Tarjeta del Código y botón WhatsApp -->
+      <div class="bg-gradient-to-b from-slate-800/90 to-slate-950 p-4 rounded-2xl border border-slate-700/80 text-center relative">
+        <span class="text-[10px] uppercase tracking-widest font-bold text-slate-400">Código de Sala</span>
+        <div id="lblRoomCode" class="text-4xl font-black font-mono tracking-widest text-amber-400 my-1">----</div>
         
-        <div id="roleBox" class="p-6 rounded-2xl border-2 transition-all">
-          <div id="roleTitle" class="text-3xl font-black mb-2"></div>
-          <div id="roleDescription" class="text-slate-300 text-sm"></div>
+        <div class="flex gap-2 justify-center mt-2">
+          <button onclick="shareWhatsApp()" class="flex items-center gap-1.5 bg-emerald-600 active:bg-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition">
+            <span>💬</span> Invitar por WhatsApp
+          </button>
+          <button onclick="copyRoomLink()" class="flex items-center gap-1.5 bg-slate-700 active:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-200 transition">
+            <span>🔗</span> Copiar link
+          </button>
         </div>
       </div>
 
-      <p class="text-xs text-slate-400">No dejes que los demás miren tu pantalla.</p>
+      <!-- Ajustes de Anfitrión (Categoría y Tiempo) -->
+      <div id="hostSettings" class="hidden bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-bold text-slate-300">Categoría:</span>
+          <select id="selectCategory" class="bg-slate-800 border border-slate-700 text-amber-300 font-semibold rounded-lg px-2 py-1 focus:outline-none text-xs">
+            <option value="lugares">Lugares Cotidianos</option>
+            <option value="comida">Comidas y Bebidas</option>
+            <option value="objetos">Objetos Comunes</option>
+            <option value="profesiones">Profesiones</option>
+            <option value="cine">Películas y Series</option>
+          </select>
+        </div>
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-bold text-slate-300">Tiempo de Debate:</span>
+          <select id="selectTimer" class="bg-slate-800 border border-slate-700 text-amber-300 font-semibold rounded-lg px-2 py-1 focus:outline-none text-xs">
+            <option value="180">3 Minutos</option>
+            <option value="240">4 Minutos</option>
+            <option value="300">5 Minutos</option>
+            <option value="120">2 Minutos (Rápido)</option>
+          </select>
+        </div>
+      </div>
 
-      <div id="hostReset" class="hidden pt-4">
-        <button onclick="resetGame()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg transition active:scale-95">
-          Nueva Ronda
+      <!-- Lista de Jugadores -->
+      <div>
+        <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+          <span>Jugadores en sala</span>
+          <span id="lblCount" class="text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md">0</span>
+        </div>
+        <ul id="listPlayers" class="space-y-1.5 max-h-40 overflow-y-auto pr-1"></ul>
+      </div>
+
+      <!-- Controles Anfitrión / Espera Invitado -->
+      <div id="boxHostControls" class="hidden pt-1">
+        <button onclick="hostStartMatch()" class="w-full bg-amber-500 active:bg-amber-600 text-slate-950 font-black py-3.5 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition">
+          ¡REPARTIR ROLES!
+        </button>
+        <p class="text-center text-[11px] text-slate-500 mt-1.5">Se recomienda jugar con al menos 3 personas</p>
+      </div>
+
+      <div id="boxGuestWaiting" class="text-center py-2 text-xs text-amber-400 font-medium animate-pulse-subtle">
+        Esperando que el anfitrión comience...
+      </div>
+    </section>
+
+    <!-- ==================== VISTA 4: FASE DE ROL (SECRETO) ==================== -->
+    <section id="view-role" class="space-y-4 hidden text-center">
+      <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-xs text-slate-400">
+        Turno de iniciar el debate: <br>
+        <strong id="lblStarter" class="text-amber-400 text-sm">--</strong>
+      </div>
+
+      <!-- Tarjeta Hold-to-Reveal -->
+      <div id="cardSecret" 
+           onmousedown="showSecretCard()" onmouseup="hideSecretCard()" 
+           ontouchstart="showSecretCard(event)" ontouchend="hideSecretCard(event)"
+           class="h-48 rounded-2xl border-2 border-dashed border-slate-700 bg-slate-950 flex flex-col items-center justify-center p-4 cursor-pointer active:border-amber-400 transition select-none relative">
+        
+        <div id="secretCover" class="flex flex-col items-center justify-center space-y-2">
+          <span class="text-3xl">🔒</span>
+          <span class="text-sm font-bold text-slate-300 uppercase tracking-wide">Mantén presionado</span>
+          <span class="text-[11px] text-slate-500">para ver tu palabra secreta</span>
+        </div>
+
+        <div id="secretReveal" class="hidden flex flex-col items-center justify-center">
+          <span id="roleBadge" class="text-xs uppercase font-black px-2.5 py-0.5 rounded-md mb-2"></span>
+          <div id="roleMainWord" class="text-2xl font-black tracking-wide"></div>
+          <p id="roleSubHint" class="text-xs text-slate-300 mt-2 max-w-xs leading-relaxed"></p>
+        </div>
+      </div>
+
+      <!-- Botón para ir al debate -->
+      <button onclick="uiGoToDebate()" class="w-full bg-slate-800 active:bg-slate-700 text-white font-bold py-3 rounded-xl border border-slate-700 active:scale-95 transition text-xs">
+        Entendido, ir al Debate y Temporizador →
+      </button>
+    </section>
+
+    <!-- ==================== VISTA 5: DEBATE Y TEMPORIZADOR ==================== -->
+    <section id="view-debate" class="space-y-4 hidden text-center">
+      <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tiempo de Discusión</span>
+        <div id="lblTimer" class="text-5xl font-mono font-black text-amber-400 my-2">03:00</div>
+        <p class="text-xs text-slate-400">Hagan preguntas sutiles entre ustedes para pillar al impostor.</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="uiPeekAgain()" class="w-full bg-slate-800 active:bg-slate-700 text-slate-300 text-xs font-bold py-3 rounded-xl border border-slate-700">
+          👀 Recordar mi rol
+        </button>
+        <button onclick="uiStartVotingPhase()" class="w-full bg-red-600 active:bg-red-700 text-white text-xs font-black py-3 rounded-xl shadow-lg shadow-red-600/20">
+          🗳️ Ir a Votación
         </button>
       </div>
-    </div>
+    </section>
 
-  </div>
+    <!-- ==================== VISTA 6: VOTACIÓN ==================== -->
+    <section id="view-vote" class="space-y-4 hidden">
+      <div class="text-center">
+        <h2 class="text-lg font-black text-red-400">¿QUIÉN ES EL IMPOSTOR?</h2>
+        <p class="text-xs text-slate-400">Toca el nombre del sospechoso para votar.</p>
+      </div>
+
+      <div id="votingList" class="space-y-2"></div>
+
+      <div id="votingWaitNotice" class="hidden text-center text-xs text-emerald-400 font-semibold p-2 bg-emerald-950/40 border border-emerald-800 rounded-xl">
+        ✓ Voto emitido. Esperando al resto...
+      </div>
+
+      <div id="hostForceReveal" class="hidden pt-2">
+        <button onclick="hostFinishVoting()" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs active:scale-95">
+          Cerrar Votación y Revelar
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== VISTA 7: REVELACIÓN FINAL ==================== -->
+    <section id="view-results" class="space-y-4 hidden text-center">
+      <div id="resultBox" class="p-5 rounded-2xl border-2">
+        <span class="text-4xl block mb-1">🎭</span>
+        <span class="text-xs uppercase font-bold text-slate-400">El Impostor era:</span>
+        <h2 id="lblImpostorName" class="text-2xl font-black text-red-400 my-1">--</h2>
+        <div class="mt-2 text-xs text-slate-300 border-t border-slate-700/60 pt-2">
+          Palabra Secreta: <strong id="lblSecretWordReveal" class="text-emerald-400">--</strong>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-xs uppercase font-bold text-slate-400 mb-2">Resultados de Votos</h3>
+        <div id="voteResultsList" class="space-y-1 text-xs"></div>
+      </div>
+
+      <div id="hostPlayAgain" class="hidden pt-2">
+        <button onclick="hostResetMatch()" class="w-full bg-amber-500 active:bg-amber-600 text-slate-950 font-black py-3.5 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition">
+          JUGAR OTRA RONDA
+        </button>
+      </div>
+    </section>
+
+  </main>
 
   <script>
-    const WORDS = [
-      "Playa", "Hospital", "Avión", "Cine", "Restaurante", "Escuela",
-      "Gimnasio", "Supermercado", "Biblioteca", "Estadio", "Circo",
-      "Banco", "Hotel", "Museo", "Zoológico", "Crucero", "Submarino", "Estación Espacial"
-    ];
+    /* =====================================================================
+       BANCO DE PALABRAS POR CATEGORÍA
+       ===================================================================== */
+    const CATEGORIES = {
+      lugares: [
+        "Playa", "Aeropuerto", "Hospital", "Cine", "Restaurante", "Gimnasio",
+        "Supermercado", "Biblioteca", "Estadio de Fútbol", "Circo", "Banco",
+        "Hotel de Lujo", "Museo", "Zoológico", "Crucero", "Estación de Metro",
+        "Termas", "Mall", "Campamento", "Parque de Diversiones"
+      ],
+      comida: [
+        "Pizza", "Completo", "Empanada", "Hamburguesa", "Sushi", "Tacos",
+        "Cazuela", "Asado", "Helado", "Pastel de Choclo", "Sopaipillas",
+        "Chocolate", "Ceviche", "Lasaña", "Chorrillana", "Sandía"
+      ],
+      objetos: [
+        "Teléfono Móvil", "Guitarra", "Bicicleta", "Paraguas", "Reloj Despertador",
+        "Cámara Fotográfica", "Mochila", "Microondas", "Audífonos", "Zapatillas",
+        "Linterna", "Telescopio", "Monopatín", "Plancha"
+      ],
+      profesiones: [
+        "Médico", "Astronauta", "Bombero", "Profesor", "Piloto de Avión",
+        "Chef de Cocina", "Detective Privado", "Mecánico", "Abogado",
+        "Arquitecto", "Futbolista", "Científico", "Carpintero"
+      ],
+      cine: [
+        "Titanic", "Harry Potter", "Star Wars", "Jurassic Park", "El Rey León",
+        "Avatar", "Spider-Man", "Batman", "Shrek", "Toy Story", "Avengers"
+      ]
+    };
 
-    // Identificador persistente por cliente
-    let clientUUID = localStorage.getItem('impostor_client_id');
-    if (!clientUUID) {
-      clientUUID = 'user_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('impostor_client_id', clientUUID);
+    /* =====================================================================
+       SONIDOS NATIVOS SINTETIZADOS (Web Audio API)
+       ===================================================================== */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(freq = 440, type = 'sine', duration = 0.1) {
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
     }
 
-    let peer = null;
-    let myName = "";
+    function soundClick() { playBeep(600, 'sine', 0.05); }
+    function soundStart() { 
+      playBeep(440, 'triangle', 0.1); 
+      setTimeout(() => playBeep(880, 'triangle', 0.2), 100);
+      if (navigator.vibrate) navigator.vibrate([40, 60, 80]);
+    }
+    function soundReveal() {
+      playBeep(300, 'sawtooth', 0.2);
+      setTimeout(() => playBeep(220, 'sawtooth', 0.4), 180);
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    }
+
+    /* =====================================================================
+       ESTADO GLOBAL Y PERSISTENCIA
+       ===================================================================== */
+    let myUUID = localStorage.getItem('impostor_uuid');
+    if (!myUUID) {
+      myUUID = 'u_' + Math.random().toString(36).substring(2, 9);
+      localStorage.setItem('impostor_uuid', myUUID);
+    }
+
+    let myName = localStorage.getItem('impostor_name') || "";
     let isHost = false;
     let roomCode = "";
-    let connections = new Map(); // uuid -> conn
+    let peer = null;
     let hostConn = null;
-    let players = [];            // [{ uuid, name }]
-    let heartbeatInterval = null;
+    let connections = new Map(); // uuid -> conn
+    let players = [];            // [{ uuid, name, avatar }]
+    let myRoleData = null;       // { isImpostor, word, starter }
+    let timerInterval = null;
+    let timeLeft = 180;
+    let votes = {};              // voterUUID -> suspectUUID
 
-    function notify(text, isError = false) {
-      const msg = document.getElementById('statusMessage');
-      msg.innerText = text;
-      msg.className = isError 
-        ? "mb-4 p-3 rounded-lg text-sm text-center font-medium bg-red-950/60 border border-red-500/50 text-red-300"
-        : "mb-4 p-3 rounded-lg text-sm text-center font-medium bg-amber-950/60 border border-amber-500/50 text-amber-300";
-      msg.classList.remove('hidden');
+    const AVATARS = ["🦊", "🐼", "🦁", "🐯", "🐨", "🐸", "🐙", "🐵", "🦄", "🦉"];
+    function getAvatar(uuid) {
+      let sum = 0;
+      for (let i = 0; i < uuid.length; i++) sum += uuid.charCodeAt(i);
+      return AVATARS[sum % AVATARS.length];
     }
 
-    function clearNotify() {
-      document.getElementById('statusMessage').classList.add('hidden');
+    /* =====================================================================
+       INTERFAZ DE USUARIO (NAVEGACIÓN)
+       ===================================================================== */
+    function setBadge(text, color = "bg-emerald-500") {
+      document.getElementById('connStatus').innerText = text;
+      document.getElementById('connDot').className = `w-2 h-2 rounded-full ${color}`;
     }
 
-    function showHomeScreen() {
-      clearNotify();
-      document.getElementById('screen-home').classList.remove('hidden');
-      document.getElementById('screen-join').classList.add('hidden');
-      document.getElementById('screen-lobby').classList.add('hidden');
-      document.getElementById('screen-role').classList.add('hidden');
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.className = `mb-3 p-3 rounded-xl text-xs font-semibold text-center ${
+        isError ? 'bg-red-950/80 border border-red-500 text-red-300' : 'bg-amber-950/80 border border-amber-500 text-amber-300'
+      }`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 4000);
     }
 
-    function showJoinScreen() {
-      const name = document.getElementById('playerName').value.trim();
-      if (!name) return alert("Por favor ingresa tu nombre");
+    function switchView(viewId) {
+      const views = ['view-home', 'view-join', 'view-lobby', 'view-role', 'view-debate', 'view-vote', 'view-results'];
+      views.forEach(id => document.getElementById(id).classList.add('hidden'));
+      document.getElementById(viewId).classList.remove('hidden');
+    }
+
+    function uiShowHome() { switchView('view-home'); }
+    function uiShowJoin() {
+      const name = document.getElementById('inputName').value.trim();
+      if (!name) return showToast("Escribe tu apodo primero", true);
       myName = name;
-      clearNotify();
-      document.getElementById('screen-home').classList.add('hidden');
-      document.getElementById('screen-join').classList.remove('hidden');
+      localStorage.setItem('impostor_name', myName);
+      soundClick();
+      switchView('view-join');
     }
 
-    // CREAR SALA (HOST)
-    function createRoom() {
-      const name = document.getElementById('playerName').value.trim();
-      if (!name) return alert("Por favor ingresa tu nombre");
+    /* =====================================================================
+       CREACIÓN Y CONEXIÓN A SALA (PEERJS + STUN)
+       ===================================================================== */
+    const peerConfig = {
+      debug: 1,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' }
+        ]
+      }
+    };
+
+    function uiCreateRoom() {
+      const name = document.getElementById('inputName').value.trim();
+      if (!name) return showToast("Escribe tu apodo primero", true);
       myName = name;
+      localStorage.setItem('impostor_name', myName);
+      soundClick();
+
       isHost = true;
-
-      const btn = document.getElementById('btnCreate');
-      btn.disabled = true;
-      btn.innerText = "Conectando...";
-      notify("Conectando con el servidor...");
-
       roomCode = Math.floor(1000 + Math.random() * 9000).toString();
-      const peerId = 'impostor-game-' + roomCode;
+      setBadge("Creando...", "bg-amber-400 animate-ping");
 
       if (peer) peer.destroy();
-
-      peer = new Peer(peerId, {
-        debug: 1,
-        config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-      });
+      peer = new Peer('imp-rm-' + roomCode, peerConfig);
 
       peer.on('open', () => {
-        clearNotify();
-        btn.disabled = false;
-        btn.innerText = "Crear Sala";
-        players = [{ uuid: clientUUID, name: myName }];
-        document.getElementById('screen-home').classList.add('hidden');
-        document.getElementById('screen-lobby').classList.remove('hidden');
-        document.getElementById('displayRoomCode').innerText = roomCode;
-        document.getElementById('hostControls').classList.remove('hidden');
-        document.getElementById('guestWaiting').classList.add('hidden');
-        renderPlayers();
-        startHeartbeat();
+        setBadge("En Línea", "bg-emerald-500");
+        players = [{ uuid: myUUID, name: myName, avatar: getAvatar(myUUID) }];
+        document.getElementById('lblRoomCode').innerText = roomCode;
+        document.getElementById('hostSettings').classList.remove('hidden');
+        document.getElementById('boxHostControls').classList.remove('hidden');
+        document.getElementById('boxGuestWaiting').classList.add('hidden');
+        renderLobbyPlayers();
+        switchView('view-lobby');
+        history.replaceState(null, '', `?sala=${roomCode}`);
       });
 
       peer.on('connection', (conn) => {
-        let senderUUID = null;
+        let remoteUUID = null;
 
         conn.on('data', (data) => {
           if (data.type === 'JOIN') {
-            senderUUID = data.uuid;
-            
-            // Cerrar conexión anterior si existía para ese mismo usuario
-            if (connections.has(senderUUID)) {
-              try { connections.get(senderUUID).close(); } catch (e) {}
+            remoteUUID = data.uuid;
+            if (connections.has(remoteUUID)) {
+              try { connections.get(remoteUUID).close(); } catch (e) {}
             }
-            connections.set(senderUUID, conn);
+            connections.set(remoteUUID, conn);
 
-            // Evitar duplicados por UUID
-            const existingIndex = players.findIndex(p => p.uuid === senderUUID);
-            if (existingIndex !== -1) {
-              players[existingIndex].name = data.name; // Actualiza nombre si cambió
+            const existIdx = players.findIndex(p => p.uuid === remoteUUID);
+            if (existIdx !== -1) {
+              players[existIdx].name = data.name;
             } else {
-              players.push({ uuid: senderUUID, name: data.name });
+              players.push({ uuid: remoteUUID, name: data.name, avatar: getAvatar(remoteUUID) });
             }
 
-            renderPlayers();
-            broadcastLobby();
+            renderLobbyPlayers();
+            broadcast({ type: 'LOBBY_UPDATE', players });
+          } else if (data.type === 'VOTE') {
+            votes[data.voter] = data.suspect;
+            checkAllVotes();
           }
         });
 
-        const handleDisconnect = () => {
-          if (senderUUID && connections.get(senderUUID) === conn) {
-            connections.delete(senderUUID);
-            players = players.filter(p => p.uuid !== senderUUID);
-            renderPlayers();
-            broadcastLobby();
+        const drop = () => {
+          if (remoteUUID && connections.get(remoteUUID) === conn) {
+            connections.delete(remoteUUID);
+            players = players.filter(p => p.uuid !== remoteUUID);
+            renderLobbyPlayers();
+            broadcast({ type: 'LOBBY_UPDATE', players });
           }
         };
-
-        conn.on('close', handleDisconnect);
-        conn.on('error', handleDisconnect);
+        conn.on('close', drop);
+        conn.on('error', drop);
       });
 
       peer.on('error', (err) => {
-        btn.disabled = false;
-        btn.innerText = "Crear Sala";
-        if (err.type === 'unavailable-id') {
-          createRoom();
-        } else {
-          notify("Error al conectar: " + err.type, true);
-        }
+        if (err.type === 'unavailable-id') uiCreateRoom();
+        else showToast("Error de conexión: " + err.type, true);
       });
     }
 
-    // Ping para limpiar conexiones muertas silenciosas en móviles
-    function startHeartbeat() {
-      if (heartbeatInterval) clearInterval(heartbeatInterval);
-      heartbeatInterval = setInterval(() => {
-        let changed = false;
-        connections.forEach((conn, uuid) => {
-          if (!conn.open) {
-            connections.delete(uuid);
-            players = players.filter(p => p.uuid !== uuid);
-            changed = true;
-          }
-        });
-        if (changed) {
-          renderPlayers();
-          broadcastLobby();
-        }
-      }, 3000);
-    }
-
-    // UNIRSE A SALA (GUEST)
-    function joinRoom() {
-      const code = document.getElementById('roomCodeInput').value.trim();
-      if (code.length !== 4) return alert("Ingresa un código de 4 dígitos");
+    function uiJoinRoom(forcedCode = null) {
+      const code = forcedCode || document.getElementById('inputCode').value.trim();
+      if (code.length !== 4) return showToast("Código inválido de 4 dígitos", true);
       roomCode = code;
 
-      const btn = document.getElementById('btnJoin');
-      btn.disabled = true;
-      btn.innerText = "Buscando sala...";
-      notify("Buscando sala " + roomCode + "...");
+      if (!myName) {
+        const name = document.getElementById('inputName').value.trim();
+        if (!name) {
+          switchView('view-home');
+          return showToast("Ingresa tu apodo para continuar", true);
+        }
+        myName = name;
+        localStorage.setItem('impostor_name', myName);
+      }
+
+      soundClick();
+      setBadge("Buscando...", "bg-amber-400 animate-ping");
 
       if (peer) peer.destroy();
-
-      peer = new Peer(null, {
-        debug: 1,
-        config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-      });
+      peer = new Peer(null, peerConfig);
 
       peer.on('open', () => {
-        hostConn = peer.connect('impostor-game-' + roomCode, { reliable: true });
+        hostConn = peer.connect('imp-rm-' + roomCode, { reliable: true });
 
         hostConn.on('open', () => {
-          clearNotify();
-          btn.disabled = false;
-          btn.innerText = "Entrar a la Sala";
-          hostConn.send({ type: 'JOIN', uuid: clientUUID, name: myName });
-          document.getElementById('screen-join').classList.add('hidden');
-          document.getElementById('screen-lobby').classList.remove('hidden');
-          document.getElementById('displayRoomCode').innerText = roomCode;
+          setBadge("Conectado", "bg-emerald-500");
+          hostConn.send({ type: 'JOIN', uuid: myUUID, name: myName });
+          document.getElementById('lblRoomCode').innerText = roomCode;
+          document.getElementById('hostSettings').classList.add('hidden');
+          document.getElementById('boxHostControls').classList.add('hidden');
+          document.getElementById('boxGuestWaiting').classList.remove('hidden');
+          switchView('view-lobby');
+          history.replaceState(null, '', `?sala=${roomCode}`);
         });
 
         hostConn.on('data', (data) => {
-          if (data.type === 'UPDATE_PLAYERS') {
+          if (data.type === 'LOBBY_UPDATE') {
             players = data.players;
-            renderPlayers();
-          } else if (data.type === 'START_GAME') {
-            showRole(data.isImpostor, data.word);
-          } else if (data.type === 'RESET') {
-            document.getElementById('screen-role').classList.add('hidden');
-            document.getElementById('screen-lobby').classList.remove('hidden');
+            renderLobbyPlayers();
+          } else if (data.type === 'GAME_START') {
+            soundStart();
+            myRoleData = data.roles[myUUID];
+            setupRoleCard(myRoleData, data.starter);
+            switchView('view-role');
+          } else if (data.type === 'START_VOTING') {
+            openVotingView();
+          } else if (data.type === 'FINAL_REVEAL') {
+            showFinalResults(data.impostorName, data.secretWord, data.results);
+          } else if (data.type === 'RESET_LOBBY') {
+            switchView('view-lobby');
           }
         });
 
-        const onHostDisconnect = () => {
-          notify("Se perdió la conexión con el anfitrión.", true);
-          setTimeout(() => showHomeScreen(), 2000);
+        const disconnect = () => {
+          setBadge("Desconectado", "bg-red-500");
+          showToast("Conexión perdida con el anfitrión", true);
+          setTimeout(() => switchView('view-home'), 2500);
         };
-
-        hostConn.on('close', onHostDisconnect);
-        hostConn.on('error', onHostDisconnect);
+        hostConn.on('close', disconnect);
+        hostConn.on('error', disconnect);
       });
 
-      peer.on('error', (err) => {
-        btn.disabled = false;
-        btn.innerText = "Entrar a la Sala";
-        notify("Error al entrar a la sala: " + err.type, true);
+      peer.on('error', () => {
+        showToast("No se encontró la sala " + roomCode, true);
+        setBadge("Error", "bg-red-500");
       });
     }
 
-    function renderPlayers() {
-      const list = document.getElementById('playersList');
+    function broadcast(data) {
+      connections.forEach(conn => {
+        if (conn.open) conn.send(data);
+      });
+    }
+
+    function renderLobbyPlayers() {
+      const list = document.getElementById('listPlayers');
       list.innerHTML = "";
       players.forEach(p => {
         const li = document.createElement('li');
-        li.className = "flex items-center justify-between bg-slate-700/60 px-3 py-2 rounded-lg text-sm";
-        const isLeader = p.uuid === players[0]?.uuid;
-        li.innerHTML = `<span>${p.name}</span>` + (isLeader ? `<span class="text-[10px] bg-amber-400 text-slate-950 px-2 py-0.5 rounded font-bold uppercase">Líder</span>` : "");
+        li.className = "flex items-center justify-between bg-slate-950/70 border border-slate-800/80 px-3 py-2 rounded-xl text-xs";
+        const isMe = p.uuid === myUUID;
+        li.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="text-base">${p.avatar}</span>
+            <span class="font-bold ${isMe ? 'text-amber-400' : 'text-slate-200'}">${p.name} ${isMe ? '(Tú)' : ''}</span>
+          </div>
+          ${p.uuid === players[0]?.uuid ? '<span class="text-[9px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded">LÍDER</span>' : ''}
+        `;
         list.appendChild(li);
       });
-      document.getElementById('playerCount').innerText = players.length;
+      document.getElementById('lblCount').innerText = players.length;
     }
 
-    function broadcastLobby() {
-      connections.forEach((conn) => {
-        if (conn.open) conn.send({ type: 'UPDATE_PLAYERS', players });
+    /* =====================================================================
+       COMPARTIR ENLACE POR WHATSAPP
+       ===================================================================== */
+    function getShareUrl() {
+      return `${window.location.origin}${window.location.pathname}?sala=${roomCode}`;
+    }
+
+    function shareWhatsApp() {
+      soundClick();
+      const text = encodeURIComponent(`🕵️‍♂️ ¡Únete a mi partida de *El Impostor*!\nEntra aquí directo: ${getShareUrl()}`);
+      window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+    }
+
+    function copyRoomLink() {
+      soundClick();
+      navigator.clipboard.writeText(getShareUrl()).then(() => {
+        showToast("¡Enlace copiado al portapapeles!");
+      }).catch(() => {
+        showToast("Código: " + roomCode);
       });
     }
 
-    function startGame() {
+    /* =====================================================================
+       LÓGICA DEL JUEGO (REPARTO, ROLES, PRIVACIDAD)
+       ===================================================================== */
+    function hostStartMatch() {
       if (players.length < 3) {
-        if (!confirm("Hay menos de 3 jugadores. ¿Quieres iniciar de todas formas para probar?")) return;
+        if (!confirm("Hay menos de 3 jugadores. ¿Quieres probar la partida de todas formas?")) return;
       }
 
-      const secretWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+      soundStart();
+      const catKey = document.getElementById('selectCategory').value;
+      const wordList = CATEGORIES[catKey] || CATEGORIES.lugares;
+      const secretWord = wordList[Math.floor(Math.random() * wordList.length)];
+      
       const impostorIndex = Math.floor(Math.random() * players.length);
+      const starterIndex = Math.floor(Math.random() * players.length);
+      const starterName = players[starterIndex].name;
 
-      players.forEach((p, index) => {
-        const isImpostor = (index === impostorIndex);
-        if (p.uuid === clientUUID) {
-          showRole(isImpostor, secretWord);
-        } else {
-          const conn = connections.get(p.uuid);
-          if (conn && conn.open) {
-            conn.send({ type: 'START_GAME', isImpostor, word: secretWord });
-          }
-        }
+      const roles = {};
+      players.forEach((p, idx) => {
+        roles[p.uuid] = {
+          isImpostor: idx === impostorIndex,
+          word: secretWord,
+          impostorName: players[impostorIndex].name
+        };
       });
+
+      votes = {};
+      timeLeft = parseInt(document.getElementById('selectTimer').value) || 180;
+
+      // Enviar a todos
+      broadcast({ type: 'GAME_START', roles, starter: starterName });
+      myRoleData = roles[myUUID];
+      setupRoleCard(myRoleData, starterName);
+      switchView('view-role');
     }
 
-    function showRole(isImpostor, word) {
-      document.getElementById('screen-lobby').classList.add('hidden');
-      document.getElementById('screen-role').classList.remove('hidden');
+    function setupRoleCard(data, starterName) {
+      document.getElementById('lblStarter').innerText = starterName;
+      const badge = document.getElementById('roleBadge');
+      const title = document.getElementById('roleMainWord');
+      const hint = document.getElementById('roleSubHint');
 
-      const box = document.getElementById('roleBox');
-      const title = document.getElementById('roleTitle');
-      const desc = document.getElementById('roleDescription');
-
-      if (isImpostor) {
-        box.className = "p-6 rounded-2xl border-2 border-red-500 bg-red-950/40 text-red-400";
-        title.innerText = "¡ERES EL IMPOSTOR!";
-        desc.innerText = "No conoces la palabra. Escucha las descripciones de los demás y disimula.";
+      if (data.isImpostor) {
+        badge.innerText = "¡ERES EL IMPOSTOR!";
+        badge.className = "text-[11px] uppercase font-black px-2.5 py-0.5 rounded-md mb-2 bg-red-500 text-white";
+        title.innerText = "❓ PALABRA OCULTA";
+        title.className = "text-2xl font-black tracking-wide text-red-400";
+        hint.innerText = "No conoces el lugar/objeto. Escucha atentamente las preguntas de los demás y no te delates.";
       } else {
-        box.className = "p-6 rounded-2xl border-2 border-emerald-500 bg-emerald-950/40 text-emerald-400";
-        title.innerText = word;
-        desc.innerText = "Esta es la palabra secreta. Da pistas sutiles para descubrir quién finge.";
+        badge.innerText = "TRIPULANTE";
+        badge.className = "text-[11px] uppercase font-black px-2.5 py-0.5 rounded-md mb-2 bg-emerald-500 text-slate-950";
+        title.innerText = data.word;
+        title.className = "text-2xl font-black tracking-wide text-emerald-400";
+        hint.innerText = "Esta es la palabra secreta. Haz preguntas sutiles para pillar a quien no la sepa.";
       }
+    }
+
+    function showSecretCard(e) {
+      if (e) e.preventDefault();
+      soundClick();
+      document.getElementById('secretCover').classList.add('hidden');
+      document.getElementById('secretReveal').classList.remove('hidden');
+      if (navigator.vibrate) navigator.vibrate(20);
+    }
+
+    function hideSecretCard(e) {
+      if (e) e.preventDefault();
+      document.getElementById('secretCover').classList.remove('hidden');
+      document.getElementById('secretReveal').classList.add('hidden');
+    }
+
+    /* =====================================================================
+       FASE DE DEBATE Y TEMPORIZADOR
+       ===================================================================== */
+    function uiGoToDebate() {
+      soundClick();
+      switchView('view-debate');
+      if (!timerInterval) {
+        updateTimerDisplay();
+        timerInterval = setInterval(() => {
+          timeLeft--;
+          updateTimerDisplay();
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            uiStartVotingPhase();
+          }
+        }, 1000);
+      }
+    }
+
+    function updateTimerDisplay() {
+      const min = Math.floor(Math.max(0, timeLeft) / 60);
+      const sec = Math.max(0, timeLeft) % 60;
+      document.getElementById('lblTimer').innerText = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+    }
+
+    function uiPeekAgain() {
+      switchView('view-role');
+    }
+
+    /* =====================================================================
+       FASE DE VOTACIÓN
+       ===================================================================== */
+    function uiStartVotingPhase() {
+      soundClick();
+      if (isHost) {
+        broadcast({ type: 'START_VOTING' });
+      } else if (hostConn && hostConn.open) {
+        hostConn.send({ type: 'START_VOTING' });
+      }
+      openVotingView();
+    }
+
+    function openVotingView() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      switchView('view-vote');
+      document.getElementById('votingWaitNotice').classList.add('hidden');
 
       if (isHost) {
-        document.getElementById('hostReset').classList.remove('hidden');
+        document.getElementById('hostForceReveal').classList.remove('hidden');
+      }
+
+      const container = document.getElementById('votingList');
+      container.innerHTML = "";
+
+      players.forEach(p => {
+        if (p.uuid === myUUID) return; // No auto-votarse
+        const btn = document.createElement('button');
+        btn.className = "w-full flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 text-left hover:border-red-500/50 active:scale-95 transition";
+        btn.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl">${p.avatar}</span>
+            <span class="font-bold text-sm text-slate-200">${p.name}</span>
+          </div>
+          <span class="text-xs text-red-400 font-bold">Acusar 🎯</span>
+        `;
+        btn.onclick = () => castVote(p.uuid);
+        container.appendChild(btn);
+      });
+    }
+
+    function castVote(suspectUUID) {
+      soundClick();
+      document.getElementById('votingList').innerHTML = "";
+      document.getElementById('votingWaitNotice').classList.remove('hidden');
+
+      if (isHost) {
+        votes[myUUID] = suspectUUID;
+        checkAllVotes();
+      } else if (hostConn && hostConn.open) {
+        hostConn.send({ type: 'VOTE', voter: myUUID, suspect: suspectUUID });
       }
     }
 
-    function resetGame() {
-      connections.forEach((conn) => {
-        if (conn.open) conn.send({ type: 'RESET' });
-      });
-      document.getElementById('screen-role').classList.add('hidden');
-      document.getElementById('screen-lobby').classList.remove('hidden');
+    function checkAllVotes() {
+      if (Object.keys(votes).length >= players.length) {
+        hostFinishVoting();
+      }
     }
+
+    function hostFinishVoting() {
+      soundReveal();
+      const tally = {};
+      players.forEach(p => tally[p.uuid] = 0);
+      Object.values(votes).forEach(sId => {
+        if (tally[sId] !== undefined) tally[sId]++;
+      });
+
+      const impostorEntry = players.find(p => myRoleData.impostorName === p.name);
+      const impostorName = myRoleData.impostorName;
+      const secretWord = myRoleData.word;
+
+      const payload = {
+        impostorName,
+        secretWord,
+        results: players.map(p => ({
+          name: p.name,
+          avatar: p.avatar,
+          votes: tally[p.uuid] || 0
+        }))
+      };
+
+      broadcast({ type: 'FINAL_REVEAL', ...payload });
+      showFinalResults(payload.impostorName, payload.secretWord, payload.results);
+    }
+
+    function showFinalResults(impostorName, secretWord, results) {
+      soundReveal();
+      switchView('view-results');
+      document.getElementById('lblImpostorName').innerText = impostorName;
+      document.getElementById('lblSecretWordReveal').innerText = secretWord;
+
+      const list = document.getElementById('voteResultsList');
+      list.innerHTML = "";
+      results.sort((a, b) => b.votes - a.votes).forEach(r => {
+        const div = document.createElement('div');
+        div.className = "flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800";
+        div.innerHTML = `
+          <span>${r.avatar} ${r.name}</span>
+          <span class="font-bold text-amber-400">${r.votes} ${r.votes === 1 ? 'voto' : 'votos'}</span>
+        `;
+        list.appendChild(div);
+      });
+
+      if (isHost) {
+        document.getElementById('hostPlayAgain').classList.remove('hidden');
+      }
+    }
+
+    function hostResetMatch() {
+      soundClick();
+      votes = {};
+      broadcast({ type: 'RESET_LOBBY' });
+      switchView('view-lobby');
+    }
+
+    /* =====================================================================
+       INICIALIZACIÓN AUTOMÁTICA (AUTO-JOIN POR QUERY PARAM)
+       ===================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      if (myName) {
+        document.getElementById('inputName').value = myName;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const urlCode = params.get('sala');
+      if (urlCode && urlCode.length === 4) {
+        document.getElementById('inputCode').value = urlCode;
+        if (myName) {
+          uiJoinRoom(urlCode);
+        } else {
+          uiShowJoin();
+        }
+      }
+    });
   </script>
 </body>
 </html>
