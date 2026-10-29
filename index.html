@@ -8,20 +8,21 @@
   <meta http-equiv="Expires" content="0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#0a192f">
-  <title>El Impostor - Misterio y Deducción</title>
+  <meta name="theme-color" content="#0e1015">
+  <title>El Impostor - Deducción y Misterio</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   
-  <!-- Tailwind Config MUST be defined BEFORE loading Tailwind CDN script -->
+  <!-- Tailwind Config -->
   <script>
     tailwind = {
       theme: {
         extend: {
           fontFamily: {
+            serif: ['"Fraunces"', 'serif'],
             sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-            display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'monospace']
           }
         }
@@ -35,14 +36,15 @@
     *, *::before, *::after { box-sizing: border-box; }
     
     /* =========================================================================
-       DIRECCIÓN DE ARTE: HUD TÁCTICO ESPACIAL / ESTILO AMONG US & SUBTERFUGE
-       Consolas de mando sólidas (#0f1c2e / #14243b), bordes mecánicos de 2px (#203a5e),
-       Turquesa Menta (#00e5a3) para acciones principales y Naranja Alerta (#ff8c32) para emergencias.
+       DIRECCIÓN DE ARTE: JUEGO DE MESA CLÁSICO & REALISTA (TABLERO Y CARTAS)
+       Tonos naturales grafito/antracita (#0e1015 / #151821 / #1c1e28),
+       detalles en ámbar dorado cálido (#e5aa52) y carmesí lacre (#df4638).
+       Menos información, mayor elegancia y lectura serena.
        ========================================================================= */
     html, body {
       margin: 0; padding: 0; min-height: 100%;
-      background-color: #060d19;
-      color: #e2e8f0;
+      background-color: #0b0c10;
+      color: #e2e4ea;
       -webkit-tap-highlight-color: transparent;
       font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     }
@@ -52,112 +54,105 @@
       padding-bottom: max(16px, env(safe-area-inset-bottom));
       padding-left: max(12px, env(safe-area-inset-left));
       padding-right: max(12px, env(safe-area-inset-right));
-      background-color: #060d19;
+      background-color: #0b0c10;
       background-image: 
-        radial-gradient(circle at 90% 92%, rgba(14, 165, 233, 0.28) 0%, rgba(6, 13, 25, 0.9) 45%, transparent 70%),
-        radial-gradient(circle at 10% 12%, rgba(255, 140, 50, 0.15) 0%, transparent 40%),
-        radial-gradient(circle at 50% 50%, rgba(15, 28, 46, 0.6) 0%, transparent 100%),
-        linear-gradient(180deg, #070e1c 0%, #050b16 100%);
+        radial-gradient(circle at 50% 20%, rgba(229, 170, 82, 0.05) 0%, transparent 60%),
+        radial-gradient(circle at 85% 85%, rgba(223, 70, 56, 0.03) 0%, transparent 50%),
+        linear-gradient(180deg, #0e1015 0%, #090a0d 100%);
       background-attachment: fixed;
     }
     
     .prevent-select { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 
-    /* Starfield Canvas Background */
-    #ambient-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.95; }
+    /* Ambient Warm Canvas Background */
+    #ambient-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.6; }
 
-    /* CONSOLA DE MANDO DE NAVE ESPACIAL (CABINA SÓLIDA, NO GLASSMORPHISM BORROSO) */
-    .game-console, .mystery-card {
-      background: #0f1c2e;
-      border: 2px solid #203a5e;
-      border-radius: 22px;
+    /* TARJETA / CONSOLA PRINCIPAL */
+    .game-console {
+      background: #14161f;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
       box-shadow: 
-        0 24px 60px rgba(0, 0, 0, 0.9),
-        0 0 40px rgba(14, 165, 233, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        0 24px 60px -15px rgba(0, 0, 0, 0.75),
+        0 0 1px 1px rgba(255, 255, 255, 0.04);
     }
 
-    /* SUB-PANELES DE CONTROL */
-    .game-panel, .mystery-subcard {
-      background: #14243b;
-      border: 2px solid #213c60;
-      border-radius: 16px;
-      box-shadow: 
-        0 6px 18px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    }
-
-    .game-panel-dark, .mystery-subcard-dark {
-      background: #0a1320;
-      border: 1.5px solid #1c3352;
+    /* PANELES Y TARJETAS INTERIORES */
+    .game-panel {
+      background: #1a1d27;
+      border: 1px solid rgba(255, 255, 255, 0.07);
       border-radius: 14px;
-      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
     }
 
-    /* BOTONES TÁCTILES ESTILO VIDEOJUEGO (CON RELIEVE 3D Y EFECTO DE PULSACIÓN) */
+    .game-panel-dark {
+      background: #101218;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+    }
 
-    /* 1. Primario: Turquesa Menta (#00e5a3) -> READY, VOTE, PLAY, CREAR SALA */
+    /* BOTONES TÁCTILES REALISTAS (CON RELIEVE Y PESO VISUAL NATURAL) */
+
+    /* 1. Primario: Ámbar Dorado / Champagne Cálido (#e5aa52) */
     .btn-game-primary {
-      background: #00e5a3;
-      color: #081626 !important;
-      font-family: 'Space Grotesk', system-ui, sans-serif;
-      font-weight: 800;
-      border: 2px solid #00c78d;
-      border-radius: 14px;
-      box-shadow: 0 4px 0 #00996c, 0 8px 16px rgba(0, 229, 163, 0.25);
+      background: linear-gradient(180deg, #edb762 0%, #db9d41 100%);
+      color: #0e1015 !important;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-weight: 700;
+      border: 1px solid #c88c33;
+      border-radius: 12px;
+      box-shadow: 0 3px 0 #9f6b1f, 0 6px 16px rgba(219, 157, 65, 0.2);
       transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
       touch-action: manipulation;
     }
     .btn-game-primary:hover {
-      background: #06f0ad;
-      filter: brightness(1.04);
+      filter: brightness(1.05);
     }
     .btn-game-primary:active {
-      transform: translateY(3px);
-      box-shadow: 0 1px 0 #00996c, 0 2px 6px rgba(0, 229, 163, 0.2);
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #9f6b1f, 0 2px 6px rgba(219, 157, 65, 0.15);
     }
 
-    /* 2. Alerta / Omisión: Naranja Mandarina (#ff8c32) -> SKIP, IMPOSTOR, EMERGENCIAS */
+    /* 2. Alerta / Impostor / Skip: Carmesí Lacre / Terracota (#df4638) */
     .btn-game-warning {
-      background: #ff8c32;
-      color: #081626 !important;
-      font-family: 'Space Grotesk', system-ui, sans-serif;
-      font-weight: 800;
-      border: 2px solid #e07420;
-      border-radius: 14px;
-      box-shadow: 0 4px 0 #b3550f, 0 8px 16px rgba(255, 140, 50, 0.25);
+      background: linear-gradient(180deg, #e55242 0%, #cf3a2b 100%);
+      color: #ffffff !important;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-weight: 700;
+      border: 1px solid #b52f20;
+      border-radius: 12px;
+      box-shadow: 0 3px 0 #8a2013, 0 6px 16px rgba(207, 58, 43, 0.22);
       transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
       touch-action: manipulation;
     }
     .btn-game-warning:hover {
-      background: #ffa14f;
-      filter: brightness(1.04);
+      filter: brightness(1.05);
     }
     .btn-game-warning:active {
-      transform: translateY(3px);
-      box-shadow: 0 1px 0 #b3550f, 0 2px 6px rgba(255, 140, 50, 0.2);
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #8a2013, 0 2px 6px rgba(207, 58, 43, 0.15);
     }
 
-    /* 3. Consola Secundaria: Azul Pizarra con borde cian */
+    /* 3. Secundario: Grafito Natural Neutro */
     .btn-game-secondary {
-      background: #182b45;
-      color: #e2e8f0;
-      font-family: 'Space Grotesk', system-ui, sans-serif;
-      font-weight: 700;
-      border: 2px solid #294873;
-      border-radius: 14px;
-      box-shadow: 0 4px 0 #101d2e;
+      background: #1f2330;
+      color: #e2e4ea;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      box-shadow: 0 2px 0 #13151f;
       transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
       touch-action: manipulation;
     }
     .btn-game-secondary:hover {
-      background: #203758;
-      border-color: #38bdf8;
+      background: #272c3d;
+      border-color: rgba(255, 255, 255, 0.2);
       color: #ffffff;
     }
     .btn-game-secondary:active {
-      transform: translateY(3px);
-      box-shadow: 0 1px 0 #101d2e;
+      transform: translateY(1.5px);
+      box-shadow: 0 0.5px 0 #13151f;
     }
 
     /* Generic btn-press compatibility */
@@ -166,69 +161,59 @@
       touch-action: manipulation;
     }
     .btn-press:active {
-      transform: scale(0.97);
+      transform: scale(0.98);
     }
 
-    /* HUD Pills & Badges */
-    .game-pill, .stamp-badge {
+    /* Pills & Badges sobrios */
+    .game-pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-family: 'JetBrains Mono', monospace;
+      gap: 5px;
       font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 3px 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 2.5px 9px;
       border-radius: 9999px;
-      border: 1.5px solid currentColor;
+      border: 1px solid currentColor;
     }
 
     /* Top HUD Secret Word Visor */
     #topPeekOverlay {
       position: fixed; top: 0; left: 0; right: 0;
       z-index: 99999;
-      padding: calc(max(14px, env(safe-area-inset-top)) + 10px) 24px 20px;
-      background: #091322;
-      border-bottom: 3px solid #00e5a3;
+      padding: calc(max(14px, env(safe-area-inset-top)) + 12px) 24px 22px;
+      background: #11131a;
+      border-bottom: 2px solid #e5aa52;
       transform: translateY(-110%);
       transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.18s ease;
       opacity: 0; pointer-events: none; text-align: center;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.95);
+      box-shadow: 0 16px 45px rgba(0,0,0,0.85);
     }
     #topPeekOverlay.active {
       transform: translateY(0);
       opacity: 1;
     }
 
-    /* Digital Meeting Timer */
+    /* Timer Box */
     .timer-digital-box {
-      background: #0a1320;
-      border: 2px solid #203a5e;
-      border-radius: 16px;
-      box-shadow: inset 0 2px 8px rgba(0,0,0,0.7);
+      background: #101218;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
     }
 
-    /* Radar sweep animation */
-    @keyframes radarPulse {
-      0% { box-shadow: 0 0 0 0 rgba(0, 229, 163, 0.6); }
-      70% { box-shadow: 0 0 0 14px rgba(0, 229, 163, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(0, 229, 163, 0); }
-    }
-    .radar-pulse { animation: radarPulse 2s infinite ease-out; }
-
+    /* Speaker active glow */
     @keyframes speakerGlow {
-      0%, 100% { border-color: #00e5a3; box-shadow: 0 0 20px rgba(0, 229, 163, 0.4); }
-      50% { border-color: #203a5e; box-shadow: 0 0 6px rgba(0, 229, 163, 0.1); }
+      0%, 100% { border-color: #e5aa52; box-shadow: 0 0 16px rgba(229, 170, 82, 0.25); }
+      50% { border-color: rgba(255, 255, 255, 0.1); box-shadow: none; }
     }
-    .turn-glow { animation: speakerGlow 1.8s infinite ease-in-out; }
+    .turn-glow { animation: speakerGlow 2s infinite ease-in-out; }
 
     /* Views */
     .view-section {
       transition: opacity 0.2s ease, transform 0.2s ease;
     }
     .view-section.hidden {
-      display: none; opacity: 0; transform: translateY(6px);
+      display: none; opacity: 0; transform: translateY(4px);
     }
     .view-section:not(.hidden) {
       display: block; opacity: 1; transform: translateY(0);
@@ -246,198 +231,138 @@
     }
 
     /* Custom scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #0a1320; border-radius: 8px; }
-    ::-webkit-scrollbar-thumb { background: #203a5e; border-radius: 8px; }
-    ::-webkit-scrollbar-thumb:hover { background: #00e5a3; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #101218; border-radius: 6px; }
+    ::-webkit-scrollbar-thumb { background: #252a38; border-radius: 6px; }
+    ::-webkit-scrollbar-thumb:hover { background: #e5aa52; }
   </style>
 </head>
-<body class="flex flex-col items-center justify-center p-2 sm:p-4 md:p-6 font-sans prevent-select min-h-screen">
+<body class="flex flex-col items-center justify-center p-2.5 sm:p-4 md:p-6 font-sans prevent-select min-h-screen">
 
-  <!-- AMBIENT CANVAS (ESPACIO PROFUNDO, ESTRELLAS Y CURVATURA PLANETARIA) -->
+  <!-- AMBIENT CANVAS (ILUMINACIÓN CÁLIDA Y NATURAL DE SALÓN DE JUEGO) -->
   <canvas id="ambient-canvas"></canvas>
 
-  <!-- TOP HOLD-TO-REVEAL SECRET WORD VISOR (HUD ESPACIAL) -->
+  <!-- TOP HOLD-TO-REVEAL SECRET WORD VISOR (VISOR DISCRETO) -->
   <div id="topPeekOverlay">
-    <div class="max-w-2xl mx-auto">
-      <div class="flex items-center justify-center gap-2 text-xs uppercase tracking-[0.25em] text-[#00e5a3] font-mono font-bold mb-1">
-        <span>🔒</span> DESCLASIFICACIÓN DE SEGURIDAD (MANTÉN PRESIONADO)
+    <div class="max-w-xl mx-auto">
+      <div class="flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wider text-[#e5aa52] font-semibold mb-1">
+        <span>🔒</span> PALABRA SECRETA (SOLO VISIBLE MIENTRAS MANTIENES PRESIONADO)
       </div>
-      <div id="topPeekWord" class="text-3xl sm:text-5xl font-black font-display text-white tracking-wider my-2"></div>
-      <div id="topPeekRole" class="text-xs sm:text-sm font-medium max-w-md mx-auto text-slate-300"></div>
+      <div id="topPeekWord" class="text-3xl sm:text-5xl font-bold font-serif text-white tracking-wide my-2"></div>
+      <div id="topPeekRole" class="text-xs sm:text-sm font-medium max-w-md mx-auto text-stone-300"></div>
     </div>
   </div>
 
-  <!-- THEMED CUSTOM CONFIRMATION MODAL (VIDEOJUEGO ESPACIAL) -->
-  <div id="customModal" class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-[#050b16]/90 backdrop-blur-md hidden transition-opacity duration-200">
-    <div class="game-console max-w-md w-full p-6 sm:p-8 rounded-2xl border-2 border-rose-500/50 shadow-2xl space-y-4 text-center transform transition-transform duration-200 scale-95" id="customModalBox">
-      <div id="customModalIcon" class="w-16 h-16 mx-auto rounded-2xl bg-[#0a1320] border-2 border-[#203a5e] flex items-center justify-center text-3xl sm:text-4xl shadow-inner">
+  <!-- THEMED CUSTOM CONFIRMATION MODAL -->
+  <div id="customModal" class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden transition-opacity duration-200">
+    <div class="game-console max-w-sm w-full p-6 rounded-2xl border border-white/10 shadow-2xl space-y-4 text-center transform transition-transform duration-200 scale-95" id="customModalBox">
+      <div id="customModalIcon" class="w-14 h-14 mx-auto rounded-xl bg-[#101218] border border-white/10 flex items-center justify-center text-3xl shadow-inner">
         🚪
       </div>
-      <div class="space-y-1.5">
-        <h3 id="customModalTitle" class="text-lg sm:text-xl font-black font-display text-white tracking-wide uppercase">¿Abandonar la misión?</h3>
-        <p id="customModalMessage" class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-sm mx-auto font-sans">
-          Estás a punto de desconectarte de la sala. Tu lugar en la tripulación quedará vacante.
+      <div class="space-y-1">
+        <h3 id="customModalTitle" class="text-lg font-bold font-serif text-white tracking-wide">¿Abandonar la partida?</h3>
+        <p id="customModalMessage" class="text-xs text-stone-300 leading-relaxed font-sans">
+          Estás a punto de salir de la sala. Tu lugar quedará vacante.
         </p>
       </div>
-      <div class="grid grid-cols-2 gap-3 pt-2">
-        <button id="customModalCancelBtn" onclick="closeCustomModal()" class="btn-game-secondary w-full py-3 px-4 text-xs sm:text-sm">
+      <div class="grid grid-cols-2 gap-2.5 pt-2">
+        <button id="customModalCancelBtn" onclick="closeCustomModal()" class="btn-game-secondary w-full py-2.5 px-3 text-xs">
           Permanecer
         </button>
-        <button id="customModalConfirmBtn" class="btn-game-warning w-full py-3 px-4 text-xs sm:text-sm">
-          Confirmar salida
+        <button id="customModalConfirmBtn" class="btn-game-warning w-full py-2.5 px-3 text-xs">
+          Salir
         </button>
       </div>
     </div>
   </div>
 
-  <!-- MAIN APP CONTAINER (CABINA PRINCIPAL / HUD DE NAVE ESPACIAL) -->
-  <main class="w-full max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl game-console rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl relative z-10 my-auto transition-all duration-300" id="mainContainer">
+  <!-- MAIN APP CONTAINER -->
+  <main class="w-full max-w-xl md:max-w-3xl lg:max-w-4xl game-console rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl relative z-10 my-auto transition-all duration-300" id="mainContainer">
 
-    <!-- TOP GAME NAVBAR (ESTILO VIDEOJUEGO DE LA REFERENCIA) -->
-    <header class="flex items-center justify-between border-b-2 border-[#1f3a5e] pb-4 mb-6 px-1">
-      <!-- LOGO ESTILO IMPOSTOR ESPACIAL -->
-      <div class="flex items-center gap-3 cursor-pointer group" onclick="handleNavigationHome()">
-        <div class="w-10 h-10 rounded-xl bg-[#14243b] border-2 border-[#00e5a3] flex items-center justify-center text-xl shadow-lg shadow-[#00e5a3]/20 group-hover:scale-105 transition-transform">
-          🚀
+    <!-- TOP GAME NAVBAR -->
+    <header class="flex items-center justify-between border-b border-white/10 pb-4 mb-5 px-1">
+      <!-- LOGO: LIMPIO, ATEMPORAL, ELEGANTE -->
+      <div class="flex items-center gap-2.5 cursor-pointer group" onclick="handleNavigationHome()">
+        <div class="w-9 h-9 rounded-xl bg-[#1a1d27] border border-[#e5aa52]/40 flex items-center justify-center text-lg shadow-sm group-hover:scale-105 transition-transform">
+          🎭
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-xl sm:text-2xl font-black font-display tracking-widest text-white leading-none">
-              IMPOS<span class="text-[#00e5a3]">T</span>OR
-            </h1>
-            <span class="game-pill text-[10px] bg-[#14243b] text-[#00e5a3] border-[#00e5a3]/40">
-              HUD ESPACIAL
-            </span>
-          </div>
-          <span class="text-[10px] text-slate-400 font-mono tracking-wider">STARSHIP AURORA · TACTICAL MULTIPLAYER</span>
+          <h1 class="text-lg sm:text-xl font-bold font-serif tracking-tight text-white leading-none">
+            El Impostor
+          </h1>
+          <span class="text-[10px] text-stone-400 font-sans tracking-wide">Deducción social</span>
         </div>
       </div>
 
-      <!-- CENTER NAV TABS (COMO EN LA IMAGEN DE REFERENCIA: PLAY / LOBBY / REGLAS) -->
-      <div class="flex items-center gap-1 bg-[#0a1320] p-1 sm:p-1.5 rounded-full border-2 border-[#203a5e]">
-        <button id="navTabPlay" onclick="uiShowHome()" class="px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-extrabold font-display uppercase tracking-wider bg-[#00e5a3] text-[#081626] shadow-sm transition">
-          PLAY
+      <!-- CENTER NAV TABS: JUGAR / REGLAS -->
+      <div class="flex items-center gap-1 bg-[#101218] p-1 rounded-full border border-white/10">
+        <button id="navTabPlay" onclick="uiShowHome()" class="px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#e5aa52] text-[#0e1015] shadow-sm transition">
+          Jugar
         </button>
-        <button id="navTabRules" onclick="uiShowRules()" class="px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-bold font-display uppercase tracking-wider text-slate-400 hover:text-white transition">
-          REGLAS
+        <button id="navTabRules" onclick="uiShowRules()" class="px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider text-stone-400 hover:text-white transition">
+          Reglas
         </button>
       </div>
 
-      <!-- PROFILE & STATUS CHIP -->
-      <div class="flex items-center gap-3">
-        <!-- SINGLE UNIFIED LEAVE BUTTON -->
-        <button id="btnHeaderLeave" onclick="confirmLeaveMatch()" class="hidden px-3 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border-2 border-rose-500/50 text-xs font-bold font-mono btn-press flex items-center gap-1.5 shadow-sm transition">
-          <span>🚪</span> <span class="hidden sm:inline">Abandonar</span>
+      <!-- STATUS & LEAVE ACTION -->
+      <div class="flex items-center gap-2.5">
+        <button id="btnHeaderLeave" onclick="confirmLeaveMatch()" class="hidden px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-500/30 text-xs font-medium btn-press flex items-center gap-1.5 shadow-sm transition">
+          <span>🚪</span> <span class="hidden sm:inline">Salir</span>
         </button>
 
-        <div id="connBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0a1320] border-2 border-[#203a5e] text-xs font-mono font-medium text-slate-300 shadow-inner">
-          <span id="connDot" class="w-2.5 h-2.5 rounded-full bg-[#00e5a3] shadow-[0_0_8px_#00e5a3]"></span>
-          <span id="connStatus" class="font-bold text-[11px] text-[#00e5a3]">ONLINE</span>
+        <div id="connBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#101218] border border-white/10 text-xs font-medium text-stone-300 shadow-inner">
+          <span id="connDot" class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]"></span>
+          <span id="connStatus" class="font-semibold text-[11px] text-stone-200">En línea</span>
         </div>
       </div>
     </header>
 
     <!-- TOAST NOTIFICATIONS -->
-    <div id="toast" class="hidden mb-4 p-3.5 rounded-xl text-xs sm:text-sm font-semibold text-center transition-all shadow-lg font-mono bg-[#14243b] border-2 border-[#00e5a3] text-[#00e5a3]"></div>
+    <div id="toast" class="hidden mb-4 p-3 rounded-xl text-xs sm:text-sm font-medium text-center transition-all shadow-lg bg-[#1a1d27] border border-[#e5aa52]/40 text-[#e5aa52]"></div>
 
-    <!-- ==================== VIEW 1: HOME ==================== -->
+    <!-- ==================== VIEW 1: HOME (MENOS ES MÁS, ENTRADA DIRECTA) ==================== -->
     <section id="view-home" class="view-section">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
+      <div class="max-w-md mx-auto space-y-6 text-center">
 
-        <!-- Columna Izquierda: STARSHIP AURORA & RADAR MAP (COMO LA REFERENCIA) -->
-        <div class="lg:col-span-7 space-y-5">
-          <!-- Main Deck Console -->
-          <div class="game-panel p-5 sm:p-7 rounded-2xl border-2 border-[#203a5e] relative overflow-hidden">
-            <div class="flex items-center justify-between border-b border-[#203a5e] pb-3 mb-4">
-              <div class="flex items-center gap-2">
-                <span class="game-pill bg-[#0a1320] text-[#00e5a3] border-[#00e5a3]/50">IN PROGRESS</span>
-                <span class="game-pill bg-[#0a1320] text-[#ff8c32] border-[#ff8c32]/50">IMPOSTER</span>
-              </div>
-              <span class="text-xs font-mono font-bold text-slate-400">8 MAX CREW</span>
-            </div>
-
-            <div class="space-y-2 mb-4">
-              <h2 class="text-2xl sm:text-4xl font-black font-display text-white tracking-wide uppercase">
-                STARSHIP AURORA
-              </h2>
-              <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
-                Un impostor se ha infiltrado en la nave. Todos conocen el código de navegación secreto excepto él. Den pistas sutiles en cada ronda para descubrir quién miente antes de la reunión de votación.
-              </p>
-            </div>
-
-            <!-- Visual Sci-Fi Schematic / Radar Grid -->
-            <div class="game-panel-dark p-4 rounded-xl border border-[#203a5e] flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-[#14243b] border-2 border-[#00e5a3] flex items-center justify-center text-2xl radar-pulse">
-                  🛰️
-                </div>
-                <div>
-                  <div class="text-xs font-bold font-mono text-[#00e5a3] uppercase tracking-wider">RADAR DE TRIPULACIÓN</div>
-                  <div class="text-[11px] text-slate-400 font-sans">Canal P2P directo · Sin servidores centrales</div>
-                </div>
-              </div>
-              <div class="flex items-center gap-2 font-mono text-xs">
-                <span class="px-2.5 py-1 rounded-lg bg-[#14243b] text-cyan-300 border border-cyan-500/30">CANAL SEGURO</span>
-              </div>
-            </div>
-
-            <!-- Objectives List (Estilo Among Us en la esquina inferior izquierda) -->
-            <div class="mt-4 pt-4 border-t border-[#203a5e] grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
-              <div class="game-panel-dark p-3 rounded-xl border border-[#203a5e]">
-                <div class="text-[10px] font-mono font-bold text-[#00e5a3] uppercase">FASE 1</div>
-                <div class="text-xs font-bold text-white mt-0.5">Palabra Clave</div>
-                <div class="text-[11px] text-slate-400">Desclasificada en visor</div>
-              </div>
-              <div class="game-panel-dark p-3 rounded-xl border border-[#203a5e]">
-                <div class="text-[10px] font-mono font-bold text-[#ff8c32] uppercase">FASE 2</div>
-                <div class="text-xs font-bold text-white mt-0.5">Pistas por Turno</div>
-                <div class="text-[11px] text-slate-400">Una declaración sutil</div>
-              </div>
-              <div class="game-panel-dark p-3 rounded-xl border border-[#203a5e]">
-                <div class="text-[10px] font-mono font-bold text-cyan-400 uppercase">FASE 3</div>
-                <div class="text-xs font-bold text-white mt-0.5">Votación en Reunión</div>
-                <div class="text-[11px] text-slate-400">Activa desde Ronda 2</div>
-              </div>
-            </div>
+        <!-- Hero Header -->
+        <div class="space-y-2 pt-2">
+          <div class="w-14 h-14 mx-auto rounded-2xl bg-[#1a1d27] border border-[#e5aa52]/30 flex items-center justify-center text-3xl shadow-sm">
+            🕵️‍♂️
           </div>
+          <h2 class="text-3xl sm:text-4xl font-bold font-serif text-white tracking-tight">
+            Descubre al Impostor
+          </h2>
+          <p class="text-xs sm:text-sm text-stone-300 max-w-sm mx-auto leading-relaxed">
+            Todos comparten una palabra secreta, excepto uno. Den pistas sutiles por turnos y voten antes de que descubra el misterio.
+          </p>
         </div>
 
-        <!-- Columna Derecha: Terminal de Acceso (Botones estilo Videojuego) -->
-        <div class="lg:col-span-5 space-y-5">
-          <div class="game-panel p-6 sm:p-7 rounded-2xl border-2 border-[#203a5e] shadow-xl space-y-5">
-            <div class="border-b border-[#203a5e] pb-3">
-              <div class="text-xs font-mono font-bold text-[#00e5a3] tracking-widest uppercase flex items-center gap-2">
-                <span>⚡</span> <span>TERMINAL DE TRIPULANTE</span>
-              </div>
-              <div class="text-[11px] text-slate-400 mt-1">Configura tu callsign de nave para ingresar al sistema</div>
-            </div>
+        <!-- Terminal de Acceso -->
+        <div class="game-panel p-6 sm:p-7 rounded-2xl border border-white/10 shadow-lg space-y-4 text-left">
+          <div>
+            <label for="inputName" class="block text-xs font-bold uppercase tracking-wider text-stone-300 mb-2">
+              Tu nombre o apodo:
+            </label>
+            <input id="inputName" type="text" maxlength="14" placeholder="Ej: Lucas"
+                   class="w-full bg-[#101218] border border-white/15 focus:border-[#e5aa52] rounded-xl px-4 py-3 text-white text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#e5aa52]/20 transition placeholder:text-stone-500 shadow-inner">
+          </div>
 
-            <div>
-              <label class="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
-                TU APODO DE TRIPULANTE:
-              </label>
-              <input id="inputName" type="text" maxlength="14" placeholder="Ej: Comandante Nova"
-                     class="w-full bg-[#0a1320] border-2 border-[#203a5e] focus:border-[#00e5a3] rounded-xl px-4 py-3.5 text-white text-base font-bold focus:outline-none focus:ring-2 focus:ring-[#00e5a3]/30 transition placeholder:text-slate-500 shadow-inner font-sans">
-            </div>
+          <div class="space-y-2.5 pt-2">
+            <button onclick="uiCreateRoom()"
+                    class="btn-game-primary w-full py-3.5 px-5 text-sm sm:text-base flex items-center justify-center gap-2">
+              <span>✨</span> <span>Crear Nueva Sala</span>
+            </button>
 
-            <div class="space-y-3 pt-2">
-              <button onclick="uiCreateRoom()"
-                      class="btn-game-primary w-full py-4 px-6 text-sm sm:text-base flex items-center justify-center gap-2.5 tracking-wider uppercase">
-                <span>🚀</span> <span>CREAR NUEVA SALA</span>
-              </button>
+            <button onclick="uiShowJoin()"
+                    class="btn-game-secondary w-full py-3.5 px-5 text-sm flex items-center justify-center gap-2">
+              <span>🔑</span> <span>Unirse con Código</span>
+            </button>
+          </div>
 
-              <button onclick="uiShowJoin()"
-                      class="btn-game-secondary w-full py-3.5 px-6 text-sm flex items-center justify-center gap-2 tracking-wider uppercase">
-                <span>🔑</span> <span>UNIRSE CON CÓDIGO</span>
-              </button>
-            </div>
-
-            <div class="pt-3 border-t border-[#203a5e] text-center">
-              <button onclick="uiShowRules()" class="text-xs text-[#00e5a3] hover:text-white py-1 transition font-mono inline-flex items-center gap-1.5 font-bold">
-                <span>📖</span> <span>Manual de Operaciones & Reglas</span>
-              </button>
-            </div>
+          <div class="pt-2 border-t border-white/10 text-center">
+            <button onclick="uiShowRules()" class="text-xs text-stone-400 hover:text-[#e5aa52] py-1 transition font-medium inline-flex items-center gap-1.5">
+              <span>📖</span> <span>¿Cómo se juega? Leer reglas sencillas</span>
+            </button>
           </div>
         </div>
 
@@ -445,125 +370,121 @@
     </section>
 
     <!-- ==================== VIEW 2: RULES ==================== -->
-    <section id="view-rules" class="view-section hidden space-y-6">
-      <div class="flex items-center justify-between border-b-2 border-[#203a5e] pb-3">
-        <button onclick="uiShowHome()" class="btn-game-secondary text-xs font-mono font-bold flex items-center gap-1.5 px-3.5 py-2">
-          ← Volver al Menú
+    <section id="view-rules" class="view-section hidden space-y-5">
+      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+        <button onclick="uiShowHome()" class="btn-game-secondary text-xs font-medium flex items-center gap-1.5 px-3 py-1.5">
+          ← Volver
         </button>
-        <h2 class="text-sm sm:text-base font-black font-display text-[#00e5a3] uppercase tracking-wider">Protocolos de Navegación</h2>
-        <div class="w-16"></div>
+        <h2 class="text-sm sm:text-base font-bold font-serif text-[#e5aa52] tracking-wide">Cómo Jugar</h2>
+        <div class="w-14"></div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
-        <div class="game-panel p-4 rounded-xl border-2 border-[#203a5e] flex gap-3.5 items-start">
-          <div class="text-2xl p-2 rounded-xl bg-[#0a1320] border border-[#00e5a3]/40 text-[#00e5a3] flex-shrink-0">1️⃣</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs sm:text-sm text-stone-300 leading-relaxed">
+        <div class="game-panel p-4 rounded-xl border border-white/10 flex gap-3.5 items-start">
+          <div class="text-base w-7 h-7 rounded-lg bg-[#101218] border border-[#e5aa52]/30 text-[#e5aa52] flex items-center justify-center flex-shrink-0 font-bold">1</div>
           <div>
-            <h3 class="font-bold font-display text-white text-sm mb-1">Palabra Clave Asignada</h3>
-            <p>Todos los tripulantes reciben la misma palabra secreta. El <strong class="text-[#ff8c32]">impostor</strong> no la conoce y debe deducirla sobre la marcha.</p>
+            <h3 class="font-bold text-white text-sm mb-1">Palabra Secreta</h3>
+            <p>Todos los participantes reciben la misma palabra secreta. El <strong class="text-rose-400">impostor</strong> no la conoce y debe deducirla.</p>
           </div>
         </div>
 
-        <div class="game-panel p-4 rounded-xl border-2 border-[#203a5e] flex gap-3.5 items-start">
-          <div class="text-2xl p-2 rounded-xl bg-[#0a1320] border border-cyan-500/40 text-cyan-400 flex-shrink-0">2️⃣</div>
+        <div class="game-panel p-4 rounded-xl border border-white/10 flex gap-3.5 items-start">
+          <div class="text-base w-7 h-7 rounded-lg bg-[#101218] border border-[#e5aa52]/30 text-[#e5aa52] flex items-center justify-center flex-shrink-0 font-bold">2</div>
           <div>
-            <h3 class="font-bold font-display text-white text-sm mb-1">Testimonio por Turno</h3>
-            <p>En su turno, cada participante debe decir <strong class="text-white">una única pista sutil</strong> en voz alta y marcar su testimonio como <strong class="text-[#00e5a3]">"Listo"</strong>.</p>
+            <h3 class="font-bold text-white text-sm mb-1">Pistas por Turno</h3>
+            <p>Cada jugador dice en voz alta <strong class="text-white">una única pista sutil</strong> en su turno para demostrar que sabe la palabra sin regalarla.</p>
           </div>
         </div>
 
-        <div class="game-panel p-4 rounded-xl border-2 border-[#203a5e] flex gap-3.5 items-start">
-          <div class="text-2xl p-2 rounded-xl bg-[#0a1320] border border-slate-600/40 text-slate-300 flex-shrink-0">3️⃣</div>
+        <div class="game-panel p-4 rounded-xl border border-white/10 flex gap-3.5 items-start">
+          <div class="text-base w-7 h-7 rounded-lg bg-[#101218] border border-[#e5aa52]/30 text-[#e5aa52] flex items-center justify-center flex-shrink-0 font-bold">3</div>
           <div>
-            <h3 class="font-bold font-display text-white text-sm mb-1">Ronda 1: Análisis y Sospechas</h3>
-            <p>En la primera ronda nadie puede votar. Su propósito es calibrar dudas, vacilaciones y pistas sospechosas de los demás.</p>
+            <h3 class="font-bold text-white text-sm mb-1">Deducción (Ronda 1)</h3>
+            <p>En la primera ronda no se vota. Sirve para escuchar con atención, notar vacilaciones y sospechar de pistas demasiado vagas.</p>
           </div>
         </div>
 
-        <div class="game-panel p-4 rounded-xl border-2 border-[#203a5e] flex gap-3.5 items-start">
-          <div class="text-2xl p-2 rounded-xl bg-[#0a1320] border border-[#ff8c32]/40 text-[#ff8c32] flex-shrink-0">4️⃣</div>
+        <div class="game-panel p-4 rounded-xl border border-white/10 flex gap-3.5 items-start">
+          <div class="text-base w-7 h-7 rounded-lg bg-[#101218] border border-[#e5aa52]/30 text-[#e5aa52] flex items-center justify-center flex-shrink-0 font-bold">4</div>
           <div>
-            <h3 class="font-bold font-display text-white text-sm mb-1">Ronda 2: Reunión de Votación</h3>
-            <p>Al completar el ciclo en la ronda 2, se activa la <strong class="text-[#ff8c32]">Reunión de Emergencia</strong>. Cada tripulante emitirá su voto secreto o saltará la votación (Skip).</p>
+            <h3 class="font-bold text-white text-sm mb-1">Votación (Ronda 2)</h3>
+            <p>Desde la ronda 2 se abre la reunión de votación secreta. Puedes votar por un sospechoso o saltar tu voto si aún dudas.</p>
           </div>
         </div>
 
-        <div class="game-panel p-4 rounded-xl border-2 border-[#203a5e] flex gap-3.5 items-start md:col-span-2">
-          <div class="text-2xl p-2 rounded-xl bg-[#0a1320] border border-[#00e5a3]/40 text-[#00e5a3] flex-shrink-0">👁️</div>
+        <div class="game-panel p-4 rounded-xl border border-white/10 flex gap-3.5 items-start md:col-span-2">
+          <div class="text-base w-7 h-7 rounded-lg bg-[#101218] border border-[#e5aa52]/30 text-[#e5aa52] flex items-center justify-center flex-shrink-0 font-bold">👁️</div>
           <div>
-            <h3 class="font-bold font-display text-white text-sm mb-1">Hold-to-Reveal (Privacidad Total)</h3>
-            <p>Mantén presionado el botón biométrico en cualquier momento para ver tu palabra arriba. Al soltar el dedo o ratón, <strong class="text-[#00e5a3]">desaparece instantáneamente</strong> para proteger la confidencialidad de tu pantalla.</p>
+            <h3 class="font-bold text-white text-sm mb-1">Tarjeta Secreta Privada (Hold-to-Reveal)</h3>
+            <p>Mantén presionado el botón central en cualquier momento para ver tu palabra. Al soltar, desaparece de inmediato para proteger tu pantalla.</p>
           </div>
         </div>
       </div>
 
       <div class="text-center pt-2">
-        <button onclick="uiShowHome()" class="btn-game-secondary px-6 py-3 text-xs sm:text-sm">
-          ← Entendido, volver al Menú
+        <button onclick="uiShowHome()" class="btn-game-secondary px-6 py-2.5 text-xs sm:text-sm">
+          ← Entendido, volver
         </button>
       </div>
     </section>
 
     <!-- ==================== VIEW 3: JOIN ==================== -->
     <section id="view-join" class="view-section hidden">
-      <div class="max-w-md mx-auto space-y-6">
-        <div class="flex items-center justify-between border-b-2 border-[#203a5e] pb-3">
-          <button onclick="uiShowHome()" class="btn-game-secondary text-xs font-mono font-bold flex items-center gap-1.5 px-3 py-1.5">
+      <div class="max-w-md mx-auto space-y-5">
+        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+          <button onclick="uiShowHome()" class="btn-game-secondary text-xs font-medium flex items-center gap-1.5 px-3 py-1.5">
             ← Volver
           </button>
-          <h2 class="text-sm font-black font-display text-[#00e5a3] uppercase tracking-wider">Unirse a Sala</h2>
-          <div class="w-16"></div>
+          <h2 class="text-sm font-bold font-serif text-[#e5aa52] tracking-wide">Unirse a Partida</h2>
+          <div class="w-14"></div>
         </div>
 
-        <div class="game-panel p-6 sm:p-8 rounded-2xl border-2 border-[#203a5e] text-center space-y-5 shadow-lg">
+        <div class="game-panel p-6 sm:p-7 rounded-2xl border border-white/10 text-center space-y-4 shadow-lg">
           <div>
-            <label class="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">Ingresa el Código de 4 dígitos</label>
+            <label for="inputCode" class="block text-xs font-semibold uppercase tracking-wider text-stone-300 mb-2">Código de 4 dígitos</label>
             <input id="inputCode" type="tel" maxlength="4" placeholder="••••"
-                   class="w-full bg-[#0a1320] border-2 border-[#203a5e] focus:border-[#00e5a3] rounded-xl py-4 text-center text-4xl font-mono tracking-[0.4em] text-[#00e5a3] focus:outline-none focus:ring-2 focus:ring-[#00e5a3]/30 transition shadow-inner font-black">
+                   class="w-full bg-[#101218] border border-white/15 focus:border-[#e5aa52] rounded-xl py-3.5 text-center text-4xl font-mono tracking-[0.35em] text-[#e5aa52] focus:outline-none focus:ring-2 focus:ring-[#e5aa52]/20 transition shadow-inner font-bold">
           </div>
 
           <button onclick="uiJoinRoom()"
-                  class="btn-game-primary w-full py-4 text-sm sm:text-base uppercase tracking-wider">
-            🚀 INGRESAR A LA NAVE
+                  class="btn-game-primary w-full py-3.5 text-sm sm:text-base tracking-wider font-bold">
+            Entrar a la Sala
           </button>
         </div>
       </div>
     </section>
 
     <!-- ==================== VIEW 4: LOBBY ==================== -->
-    <section id="view-lobby" class="view-section hidden space-y-6">
-      <!-- Layout en 2 columnas para PC / Tablets -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+    <section id="view-lobby" class="view-section hidden space-y-5">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
 
         <!-- Columna Izquierda: Código de sala y ajustes -->
-        <div class="md:col-span-6 lg:col-span-6 space-y-5">
+        <div class="md:col-span-6 space-y-4">
           <!-- Room Code Card -->
-          <div class="game-panel p-6 rounded-2xl border-2 border-[#203a5e] text-center shadow-lg relative overflow-hidden">
-            <div class="absolute top-3 right-3 game-pill bg-[#0a1320] text-[#00e5a3] border-[#00e5a3]/50">
-              SALA ACTIVA
-            </div>
-            <span class="text-[10px] uppercase font-mono tracking-[0.25em] font-bold text-slate-400">Código de Nave</span>
-            <div id="lblRoomCode" class="text-5xl font-mono font-black tracking-[0.3em] text-[#00e5a3] my-2">----</div>
-            <p class="text-xs text-slate-300 mb-4 font-sans">Comparte este código con tus amigos para que se unan a la tripulación</p>
-            <div class="flex gap-2.5 justify-center">
-              <button onclick="shareWhatsApp()" class="btn-game-primary flex items-center gap-2 px-4 py-2.5 text-xs">
+          <div class="game-panel p-5 sm:p-6 rounded-2xl border border-white/10 text-center shadow-md relative overflow-hidden">
+            <span class="text-[11px] uppercase tracking-widest font-semibold text-stone-400">Código de Sala</span>
+            <div id="lblRoomCode" class="text-5xl font-mono font-bold tracking-[0.25em] text-[#e5aa52] my-2">----</div>
+            <p class="text-xs text-stone-300 mb-3.5">Invita a tus amigos compartiendo este código o el enlace directo</p>
+            <div class="flex gap-2 justify-center">
+              <button onclick="shareWhatsApp()" class="btn-game-primary flex items-center gap-1.5 px-3.5 py-2 text-xs">
                 <span>💬</span> <span>WhatsApp</span>
               </button>
-              <button onclick="copyRoomLink()" class="btn-game-secondary flex items-center gap-2 px-4 py-2.5 text-xs">
+              <button onclick="copyRoomLink()" class="btn-game-secondary flex items-center gap-1.5 px-3.5 py-2 text-xs">
                 <span>📋</span> <span>Copiar Enlace</span>
               </button>
             </div>
           </div>
 
           <!-- Host Settings -->
-          <div id="hostSettings" class="hidden game-panel p-5 rounded-2xl border-2 border-[#203a5e] space-y-3.5 shadow-md">
-            <div class="text-xs font-bold font-display uppercase tracking-wider text-[#00e5a3] flex items-center gap-2">
-              <span>⚙️</span> <span>Ajustes de Partida (Comandante)</span>
+          <div id="hostSettings" class="hidden game-panel p-4 sm:p-5 rounded-2xl border border-white/10 space-y-3 shadow-sm">
+            <div class="text-xs font-bold uppercase tracking-wider text-[#e5aa52] flex items-center gap-1.5">
+              <span>⚙️</span> <span>Configuración de Partida</span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
               <div>
-                <label class="block text-[11px] font-mono text-slate-300 mb-1">Categoría</label>
-                <select id="selectCategory" class="w-full bg-[#0a1320] border-2 border-[#203a5e] text-[#00e5a3] font-bold rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#00e5a3]">
+                <label class="block text-[11px] font-medium text-stone-300 mb-1">Categoría</label>
+                <select id="selectCategory" class="w-full bg-[#101218] border border-white/15 text-[#e5aa52] font-semibold rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:border-[#e5aa52]">
                   <option value="random">🎲 Aleatoria (Todo el banco)</option>
                   <option value="lugares">🏖️ Lugares</option>
                   <option value="comida">🍕 Comidas</option>
@@ -577,8 +498,8 @@
               </div>
 
               <div>
-                <label class="block text-[11px] font-mono text-slate-300 mb-1">Duración (Rondas)</label>
-                <select id="selectRounds" class="w-full bg-[#0a1320] border-2 border-[#203a5e] text-[#00e5a3] font-bold rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#00e5a3]">
+                <label class="block text-[11px] font-medium text-stone-300 mb-1">Rondas</label>
+                <select id="selectRounds" class="w-full bg-[#101218] border border-white/15 text-[#e5aa52] font-semibold rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:border-[#e5aa52]">
                   <option value="2">2 Rondas (Rápida)</option>
                   <option value="3" selected>3 Rondas (Recomendado)</option>
                   <option value="4">4 Rondas</option>
@@ -587,8 +508,8 @@
               </div>
 
               <div>
-                <label class="block text-[11px] font-mono text-slate-300 mb-1">Tiempo por Pista</label>
-                <select id="selectTurnTime" class="w-full bg-[#0a1320] border-2 border-[#203a5e] text-[#00e5a3] font-bold rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#00e5a3]">
+                <label class="block text-[11px] font-medium text-stone-300 mb-1">Tiempo por Pista</label>
+                <select id="selectTurnTime" class="w-full bg-[#101218] border border-white/15 text-[#e5aa52] font-semibold rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:border-[#e5aa52]">
                   <option value="0">Sin tiempo límite</option>
                   <option value="30">30 Segundos</option>
                   <option value="45" selected>45 Segundos</option>
@@ -597,8 +518,8 @@
               </div>
 
               <div>
-                <label class="block text-[11px] font-mono text-slate-300 mb-1">Cantidad de Impostores</label>
-                <select id="selectImpostors" class="w-full bg-[#0a1320] border-2 border-[#203a5e] text-[#00e5a3] font-bold rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#00e5a3]">
+                <label class="block text-[11px] font-medium text-stone-300 mb-1">Impostores</label>
+                <select id="selectImpostors" class="w-full bg-[#101218] border border-white/15 text-[#e5aa52] font-semibold rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:border-[#e5aa52]">
                   <option value="1" selected>1 Impostor</option>
                   <option value="2">2 Impostores (4+ jug.)</option>
                 </select>
@@ -607,32 +528,32 @@
           </div>
         </div>
 
-        <!-- Columna Derecha: PLAYER STATUS (COMO EN LA IMAGEN DE REFERENCIA) -->
-        <div class="md:col-span-6 lg:col-span-6 space-y-5">
-          <div class="game-panel p-5 rounded-2xl border-2 border-[#203a5e] shadow-md space-y-3">
-            <div class="flex items-center justify-between border-b-2 border-[#203a5e] pb-2.5">
-              <span class="text-xs font-black font-mono uppercase tracking-wider text-white flex items-center gap-2">
-                <span>👥</span> <span>PLAYER STATUS: TRIPULACIÓN</span>
+        <!-- Columna Derecha: Jugadores -->
+        <div class="md:col-span-6 space-y-4">
+          <div class="game-panel p-4 sm:p-5 rounded-2xl border border-white/10 shadow-sm space-y-2.5">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-stone-200 flex items-center gap-2">
+                <span>👥</span> <span>Jugadores en Sala</span>
               </span>
-              <span id="lblCount" class="game-pill bg-[#0a1320] text-[#00e5a3] border-[#00e5a3]/40">0</span>
+              <span id="lblCount" class="game-pill bg-[#101218] text-[#e5aa52] border-[#e5aa52]/30">0</span>
             </div>
 
-            <ul id="listPlayers" class="space-y-2 max-h-56 sm:max-h-72 overflow-y-auto pr-1 font-sans"></ul>
+            <ul id="listPlayers" class="space-y-1.5 max-h-56 sm:max-h-72 overflow-y-auto pr-1"></ul>
           </div>
 
           <!-- Acciones de inicio / espera -->
           <div id="boxHostControls" class="hidden">
             <button onclick="hostStartMatch()"
-                    class="btn-game-primary w-full py-4 px-6 text-sm sm:text-base flex items-center justify-center gap-2 uppercase tracking-wider">
-              <span>🎭</span> <span>¡ASIGNAR ROLES Y COMENZAR!</span>
+                    class="btn-game-primary w-full py-3.5 px-5 text-sm sm:text-base flex items-center justify-center gap-2 font-bold">
+              <span>🎭</span> <span>Comenzar Partida</span>
             </button>
-            <p class="text-center text-[11px] text-slate-400 mt-2 font-mono">Mínimo sugerido: 3 tripulantes</p>
+            <p class="text-center text-[11px] text-stone-400 mt-1.5">Mínimo recomendado: 3 jugadores</p>
           </div>
 
-          <div id="boxGuestWaiting" class="text-center py-4 game-panel rounded-xl border border-[#203a5e]">
-            <div class="inline-flex items-center gap-2.5 bg-[#0a1320] px-4 py-2 rounded-full border border-[#203a5e]">
-              <div class="w-2.5 h-2.5 rounded-full bg-[#00e5a3] animate-pulse"></div>
-              <span class="text-xs sm:text-sm text-slate-300 font-mono">Esperando orden del comandante...</span>
+          <div id="boxGuestWaiting" class="text-center py-3.5 game-panel rounded-xl border border-white/10">
+            <div class="inline-flex items-center gap-2 bg-[#101218] px-3.5 py-1.5 rounded-full border border-white/10">
+              <div class="w-2 h-2 rounded-full bg-[#e5aa52] animate-pulse"></div>
+              <span class="text-xs text-stone-300">Esperando que el anfitrión inicie...</span>
             </div>
           </div>
         </div>
@@ -641,97 +562,98 @@
     </section>
 
     <!-- ==================== VIEW 5: GAMEPLAY & TURNS (ROLE) ==================== -->
-    <section id="view-role" class="view-section hidden space-y-6">
+    <section id="view-role" class="view-section hidden space-y-5">
 
       <!-- Navigation & Round Info Bar -->
-      <div class="flex items-center justify-between bg-[#0a1320] px-5 py-3 rounded-xl border-2 border-[#203a5e] shadow-sm">
-        <div class="flex items-center gap-2.5">
-          <span class="game-pill bg-[#14243b] text-[#ff8c32] border-[#ff8c32]/50">GAME PHASE: TESTIMONIOS</span>
-          <span id="lblRound" class="game-pill bg-[#14243b] text-[#00e5a3] border-[#00e5a3]/50">Ronda 1 / 3</span>
+      <div class="flex items-center justify-between bg-[#101218] px-4 sm:px-5 py-2.5 rounded-xl border border-white/10 shadow-sm">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-stone-300">Fase de Pistas</span>
+          <span class="text-stone-500">·</span>
+          <span id="lblRound" class="text-xs font-bold text-[#e5aa52]">Ronda 1 / 3</span>
         </div>
 
         <div id="hostCancelBtnSlot">
-          <button id="btnHostResetMidGame" onclick="confirmResetToLobby()" class="hidden text-xs font-mono font-bold text-[#ff8c32] bg-[#0a1320] hover:bg-[#14243b] px-3.5 py-1.5 rounded-xl border-2 border-[#ff8c32]/40 btn-press">
-            ↺ Reiniciar sala
+          <button id="btnHostResetMidGame" onclick="confirmResetToLobby()" class="hidden text-xs font-medium text-stone-300 bg-[#1a1d27] hover:bg-[#222634] px-3 py-1.5 rounded-lg border border-white/10 btn-press">
+            ↺ Reiniciar
           </button>
         </div>
       </div>
 
-      <!-- Layout en 2 columnas para PC -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Layout en 2 columnas -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
-        <!-- Columna Izquierda: Acción del turno y secreto -->
-        <div class="lg:col-span-7 space-y-5">
+        <!-- Columna Izquierda: Tarjeta de secreto y turno -->
+        <div class="lg:col-span-7 space-y-4">
 
-          <!-- PERSISTENT HOLD-TO-REVEAL BIOMETRIC SCANNER -->
-          <div class="game-panel p-4 rounded-2xl border-2 border-[#203a5e] shadow-md">
+          <!-- PERSISTENT HOLD-TO-REVEAL TACTILE CARD -->
+          <div class="game-panel p-4 rounded-2xl border border-white/10 shadow-md">
             <div id="btnHoldSecret"
-                 class="w-full py-4 px-5 rounded-xl bg-[#0a1320] hover:bg-[#14243b] border-2 border-[#00e5a3] flex items-center justify-center gap-3.5 cursor-pointer active:scale-[0.98] transition select-none shadow-md"
+                 class="w-full py-4 px-5 rounded-xl bg-[#101218] hover:bg-[#151821] border border-[#e5aa52]/30 flex items-center justify-center gap-3.5 cursor-pointer active:scale-[0.98] transition select-none shadow-sm"
                  style="touch-action: none;">
-              <span class="text-2xl sm:text-3xl text-[#00e5a3]">🔏</span>
+              <span class="text-2xl text-[#e5aa52]">👁️</span>
               <div class="text-left">
-                <div class="text-xs sm:text-sm font-black font-display text-[#00e5a3] uppercase tracking-wider">MANTÉN PRESIONADO AQUÍ</div>
-                <div class="text-[11px] text-slate-300 font-sans">para ver tu palabra en el visor superior (solo mientras mantienes presionado)</div>
+                <div class="text-xs sm:text-sm font-bold text-[#e5aa52] uppercase tracking-wider">Tu Tarjeta Secreta</div>
+                <div class="text-[11px] text-stone-400">Mantén presionado para revelar tu palabra</div>
               </div>
             </div>
           </div>
 
-          <!-- MEETING / TURN TIMER PANEL (COMO EN LA IMAGEN DE REFERENCIA) -->
-          <div id="turnCard" class="game-panel p-6 rounded-2xl border-2 border-[#203a5e] relative overflow-hidden shadow-md">
+          <!-- CURRENT TURN CARD -->
+          <div id="turnCard" class="game-panel p-5 rounded-2xl border border-white/10 relative overflow-hidden shadow-md">
             <div class="flex items-center justify-between gap-4">
               <div class="text-left space-y-1">
-                <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-[#ff8c32]">TURNO DE DAR PISTA:</span>
-                <div id="lblCurrentTurn" class="text-white font-black font-display text-2xl sm:text-3xl flex items-center gap-2">--</div>
-                <div id="turnSubtitle" class="text-xs sm:text-sm text-slate-300 pt-1 font-sans"></div>
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-[#e5aa52]">Turno Actual:</span>
+                <div id="lblCurrentTurn" class="text-white font-bold text-xl sm:text-2xl flex items-center gap-2">--</div>
+                <div id="turnSubtitle" class="text-xs text-stone-300 pt-0.5"></div>
               </div>
 
               <!-- Digital Timer Box -->
-              <div id="timerContainer" class="timer-digital-box px-4 py-2.5 flex flex-col items-center justify-center flex-shrink-0 text-center">
-                <span class="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">TIEMPO</span>
-                <span id="timerText" class="font-mono font-black text-2xl sm:text-3xl text-[#00e5a3]">45</span>
+              <div id="timerContainer" class="bg-[#101218] border border-white/10 rounded-xl px-3.5 py-2 flex flex-col items-center justify-center flex-shrink-0 text-center">
+                <span class="text-[9px] font-medium text-stone-400 uppercase tracking-widest">TIEMPO</span>
+                <span id="timerText" class="font-mono font-bold text-2xl text-[#e5aa52]">45</span>
                 <svg class="hidden"><path id="timerCircle"></path></svg>
               </div>
             </div>
           </div>
 
           <!-- Clue Helper -->
-          <div id="clueHelpBox" class="game-panel-dark p-3.5 rounded-xl border border-[#203a5e] text-xs text-slate-300 flex items-center gap-2 font-sans">
-            <span class="text-[#ff8c32]">💡</span>
-            <span><em>Consejo: menciona una propiedad, uso o contexto sin revelar la palabra directa.</em></span>
+          <div id="clueHelpBox" class="game-panel-dark p-3 rounded-xl border border-white/10 text-xs text-stone-300 flex items-center gap-2">
+            <span class="text-[#e5aa52]">💡</span>
+            <span>Consejo: da una pista que demuestre que sabes la palabra sin ser demasiado obvio.</span>
           </div>
 
           <!-- MY TURN READY ACTION -->
           <div id="myTurnActionContainer">
             <button id="btnReady" onclick="markReady()"
-                    class="btn-game-primary w-full py-4 sm:py-5 text-sm sm:text-base uppercase tracking-wider flex items-center justify-center gap-2">
-              <span>✅</span> <span>YA DI MI PISTA — MARCAR LISTO</span>
+                    class="btn-game-primary w-full py-4 text-sm sm:text-base uppercase tracking-wider flex items-center justify-center gap-2">
+              <span>✓</span> <span>He dado mi pista — Marcar Listo</span>
             </button>
           </div>
 
           <!-- WAITING ON OTHER PLAYER -->
-          <div id="waitOtherActionContainer" class="hidden game-panel p-5 rounded-xl border border-[#203a5e] text-center">
-            <span class="text-xs sm:text-sm font-medium text-slate-300 font-sans">
-              Escuchando atentamente la pista de <strong id="waitPlayerName" class="text-[#00e5a3] font-display text-base">--</strong>...
+          <div id="waitOtherActionContainer" class="hidden game-panel p-4 rounded-xl border border-white/10 text-center">
+            <span class="text-xs sm:text-sm text-stone-300">
+              Escuchando la pista de <strong id="waitPlayerName" class="text-[#e5aa52] font-semibold">--</strong>...
             </span>
           </div>
 
         </div>
 
-        <!-- Columna Derecha: PLAYER STATUS LIST (COMO EN LA IMAGEN) -->
-        <div class="lg:col-span-5 space-y-4">
-          <div class="game-panel p-5 rounded-2xl border-2 border-[#203a5e] shadow-md space-y-3">
-            <div class="flex items-center justify-between border-b-2 border-[#203a5e] pb-2.5">
-              <span class="text-xs font-mono font-black uppercase tracking-wider text-white">PLAYER STATUS: PISTAS</span>
-              <span id="roundCycleLabel" class="game-pill bg-[#0a1320] text-[#00e5a3] border-[#00e5a3]/40">Inició: --</span>
+        <!-- Columna Derecha: Lista de turnos -->
+        <div class="lg:col-span-5 space-y-3">
+          <div class="game-panel p-4 rounded-2xl border border-white/10 shadow-md space-y-2.5">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-stone-300">Orden de Pistas</span>
+              <span id="roundCycleLabel" class="text-[11px] text-stone-400 font-mono">Inició: --</span>
             </div>
 
-            <div id="playersTurnList" class="space-y-2 max-h-72 overflow-y-auto pr-1 font-sans"></div>
+            <div id="playersTurnList" class="space-y-1.5 max-h-72 overflow-y-auto pr-1"></div>
           </div>
 
           <!-- Host Force Advance -->
           <div id="hostTurnBypassBox" class="hidden pt-1">
-            <button onclick="hostForceVoting()" class="btn-game-secondary w-full text-xs font-mono text-[#ff8c32] py-2.5 font-bold flex items-center justify-center gap-2">
-              <span>⚡</span> <span>Abrir Reunión de Votación (Comandante)</span>
+            <button onclick="hostForceVoting()" class="btn-game-secondary w-full text-xs text-[#e5aa52] py-2.5 font-medium flex items-center justify-center gap-2">
+              <span>⚡</span> <span>Abrir Votación Directa (Anfitrión)</span>
             </button>
           </div>
         </div>
@@ -740,127 +662,124 @@
     </section>
 
     <!-- ==================== VIEW 6: VOTING (EMERGENCY MEETING) ==================== -->
-    <section id="view-vote" class="view-section hidden space-y-6">
-      <!-- HEADER DE REUNIÓN DE EMERGENCIA (IDÉNTICO A LA REFERENCIA) -->
-      <div class="text-center border-b-2 border-[#ff8c32]/40 pb-4">
-        <div class="game-pill bg-[#0a1320] text-[#ff8c32] border-[#ff8c32] mb-2">
-          GAME PHASE: DISCUSSION & VOTING
-        </div>
-        <h2 class="text-xl sm:text-3xl font-black font-display text-white uppercase tracking-wider">
-          🚨 ¿QUIÉN ES EL IMPOSTOR?
+    <section id="view-vote" class="view-section hidden space-y-5">
+      <!-- HEADER DE REUNIÓN DE VOTACIÓN -->
+      <div class="text-center border-b border-white/10 pb-3">
+        <h2 class="text-xl sm:text-2xl font-bold font-serif text-white tracking-wide">
+          ¿Quién es el Impostor?
         </h2>
-        <span id="voteRoundBadge" class="text-xs font-mono text-slate-400">Ronda 2 de 3</span>
+        <span id="voteRoundBadge" class="text-xs text-stone-400">Ronda 2 de 3</span>
       </div>
 
       <!-- Quick Peek reminder button during voting -->
       <div class="max-w-md mx-auto">
         <div id="btnHoldSecretVote"
-             class="w-full py-3 px-4 rounded-xl bg-[#0a1320] border-2 border-[#00e5a3] text-center cursor-pointer select-none hover:bg-[#14243b] transition btn-press shadow-sm"
+             class="w-full py-2.5 px-4 rounded-xl bg-[#101218] border border-[#e5aa52]/30 text-center cursor-pointer select-none hover:bg-[#151821] transition btn-press shadow-sm"
              style="touch-action: none;">
-          <span class="text-xs sm:text-sm font-bold font-display text-[#00e5a3] flex items-center justify-center gap-2">
+          <span class="text-xs sm:text-sm font-semibold text-[#e5aa52] flex items-center justify-center gap-1.5">
             <span>👁️</span> <span>Mantén presionado para recordar tu palabra</span>
           </span>
         </div>
       </div>
 
-      <div class="text-center text-xs sm:text-sm text-slate-300 font-sans">
-        Selecciona al tripulante sospechoso por quien deseas emitir tu acusación:
+      <div class="text-center text-xs sm:text-sm text-stone-300">
+        Emite tu voto secreto seleccionando al sospechoso:
       </div>
 
       <!-- Cuadrícula de sospechosos -->
-      <div id="votingList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 font-sans"></div>
+      <div id="votingList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
 
-      <!-- Botón de Salto de Voto (SKIP en Naranja como en la referencia) -->
-      <div id="skipVoteContainer" class="max-w-md mx-auto pt-2">
+      <!-- Botón de Salto de Voto (SKIP) -->
+      <div id="skipVoteContainer" class="max-w-md mx-auto pt-1">
         <button onclick="castVote('SKIP')"
-                class="btn-game-warning w-full py-3.5 text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2">
-          <span>🤷</span> <span>SALTAR VOTO (SKIP / NO SOSPECHO)</span>
+                class="btn-game-warning w-full py-3 text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+          <span>🤷</span> <span>Saltar Voto (No estoy seguro)</span>
         </button>
       </div>
 
-      <div id="votingWaitNotice" class="hidden max-w-md mx-auto text-center text-xs sm:text-sm text-[#00e5a3] font-mono font-bold p-4 bg-[#0a1320] border-2 border-[#00e5a3] rounded-xl">
-        ✓ Voto registrado en la computadora de la nave. Esperando al resto...
+      <div id="votingWaitNotice" class="hidden max-w-md mx-auto text-center text-xs sm:text-sm text-[#e5aa52] font-semibold p-4 bg-[#101218] border border-[#e5aa52]/30 rounded-xl">
+        ✓ Voto registrado. Esperando a los demás jugadores...
       </div>
 
-      <div id="hostForceReveal" class="hidden max-w-md mx-auto pt-2">
+      <div id="hostForceReveal" class="hidden max-w-md mx-auto pt-1">
         <button onclick="hostFinishVoting()"
-                class="btn-game-secondary w-full py-3 text-xs sm:text-sm">
-          ⚡ Cerrar Votación Ahora (Comandante)
+                class="btn-game-secondary w-full py-2.5 text-xs">
+          ⚡ Cerrar Votación Ahora (Anfitrión)
         </button>
       </div>
     </section>
 
     <!-- ==================== VIEW 7: ROUND RESULTS ==================== -->
-    <section id="view-round-results" class="view-section hidden space-y-6 text-center">
-      <div class="max-w-xl mx-auto space-y-5">
-        <div class="text-4xl text-[#00e5a3]">📊</div>
-        <h2 class="text-base sm:text-xl font-black font-display text-white uppercase tracking-wider">
-          Recuento de Votos de la Reunión
+    <section id="view-round-results" class="view-section hidden space-y-5 text-center">
+      <div class="max-w-md mx-auto space-y-4">
+        <div class="text-3xl text-[#e5aa52]">📊</div>
+        <h2 class="text-base sm:text-lg font-bold font-serif text-white tracking-wide">
+          Recuento de Votos
         </h2>
 
-        <div id="roundVoteResults" class="space-y-2 text-xs sm:text-sm text-left font-sans"></div>
+        <div id="roundVoteResults" class="space-y-1.5 text-xs sm:text-sm text-left"></div>
 
-        <div id="roundVerdict" class="p-5 rounded-xl border-2 text-sm sm:text-base font-bold font-sans shadow-md"></div>
+        <div id="roundVerdict" class="p-4 rounded-xl border text-xs sm:text-sm font-medium shadow-sm"></div>
 
         <div id="hostRoundControls" class="hidden pt-2">
           <button onclick="hostNextRound()"
-                  class="btn-game-primary w-full py-4 text-sm sm:text-base uppercase tracking-wider">
-            ▶️ Continuar a Siguiente Ronda
+                  class="btn-game-primary w-full py-3.5 text-sm uppercase tracking-wider">
+            ▶ Continuar a la Siguiente Ronda
           </button>
         </div>
 
-        <div id="guestRoundWaiting" class="text-center text-xs sm:text-sm text-[#00e5a3] py-3 game-panel rounded-xl border border-[#203a5e] font-mono">
-          Esperando que el comandante avance de ronda...
+        <div id="guestRoundWaiting" class="text-center text-xs text-[#e5aa52] py-3 game-panel rounded-xl border border-white/10">
+          Esperando que el anfitrión avance a la siguiente ronda...
         </div>
       </div>
     </section>
 
     <!-- ==================== VIEW 8: FINAL RESULTS ==================== -->
-    <section id="view-results" class="view-section hidden space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+    <section id="view-results" class="view-section hidden space-y-5">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
 
-        <!-- Columna Izquierda: Revelación del caso -->
-        <div class="md:col-span-6 space-y-5 text-center">
-          <div id="resultBox" class="game-panel p-6 rounded-2xl border-2 border-rose-500/50 text-center shadow-xl">
-            <span id="resultEmoji" class="text-6xl block mb-2">🎭</span>
-            <span class="game-pill bg-[#0a1320] text-rose-400 border-rose-500/50 mb-2">
-              IDENTIDAD REVELADA
+        <!-- Columna Izquierda: Revelación -->
+        <div class="md:col-span-6 space-y-4 text-center">
+          <div id="resultBox" class="game-panel p-6 rounded-2xl border border-white/10 text-center shadow-lg">
+            <span id="resultEmoji" class="text-5xl block mb-2">🎭</span>
+            <span class="game-pill bg-[#101218] text-rose-400 border-rose-500/30 mb-2">
+              Identidad Revelada
             </span>
-            <div class="text-[11px] uppercase font-mono tracking-widest text-slate-300 mt-2">El Impostor era:</div>
-            <h2 id="lblImpostorName" class="text-3xl sm:text-4xl font-black font-display text-rose-400 my-2">--</h2>
-            <div class="mt-4 pt-4 border-t border-[#203a5e] text-xs sm:text-sm text-slate-200 font-sans">
-              Palabra Secreta de Nave: <strong id="lblSecretWordReveal" class="text-[#00e5a3] font-display text-base sm:text-lg">--</strong>
+            <div class="text-[11px] uppercase tracking-wider text-stone-400 mt-2">El Impostor era:</div>
+            <h2 id="lblImpostorName" class="text-2xl sm:text-3xl font-bold font-serif text-rose-400 my-1.5">--</h2>
+            <div class="mt-3.5 pt-3.5 border-t border-white/10 text-xs sm:text-sm text-stone-300">
+              Palabra Secreta: <strong id="lblSecretWordReveal" class="text-[#e5aa52] font-serif text-base sm:text-lg">--</strong>
             </div>
           </div>
 
-          <div id="winnerAnnouncement" class="p-4 rounded-xl text-sm sm:text-base font-bold font-display shadow-lg"></div>
+          <div id="winnerAnnouncement" class="p-3.5 rounded-xl text-xs sm:text-sm font-bold shadow-md"></div>
         </div>
 
         <!-- Columna Derecha: Puntuaciones -->
-        <div class="md:col-span-6 space-y-5">
-          <div class="game-panel p-6 rounded-2xl border-2 border-[#203a5e] shadow-md">
-            <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-white mb-3 flex items-center gap-2">
-              <span>🏆</span> <span>Puntuaciones de la Tripulación</span>
+        <div class="md:col-span-6 space-y-4">
+          <div class="game-panel p-5 rounded-2xl border border-white/10 shadow-sm">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-white mb-3 flex items-center gap-2">
+              <span>🏆</span> <span>Puntuaciones</span>
             </h3>
-            <div id="scoreBoard" class="space-y-2 text-xs sm:text-sm font-sans"></div>
+            <div id="scoreBoard" class="space-y-1.5 text-xs sm:text-sm"></div>
           </div>
 
-          <div id="hostPlayAgain" class="hidden space-y-3 pt-1">
+          <div id="hostPlayAgain" class="hidden space-y-2 pt-1">
             <button onclick="hostResetMatch()"
-                    class="btn-game-primary w-full py-4 text-sm sm:text-base uppercase tracking-wider">
-              🔄 JUGAR OTRA MISIÓN
+                    class="btn-game-primary w-full py-3.5 text-xs sm:text-sm uppercase tracking-wider">
+              🔄 Jugar Otra Partida
             </button>
             <button onclick="confirmResetToLobby()"
-                    class="btn-game-secondary w-full py-3.5 text-xs sm:text-sm uppercase tracking-wider">
+                    class="btn-game-secondary w-full py-3 text-xs uppercase tracking-wider">
               📁 Volver a la Sala de Espera
             </button>
           </div>
 
-          <div id="guestPlayAgain" class="hidden text-center py-4 game-panel rounded-xl border border-[#203a5e]">
-            <span class="text-xs sm:text-sm text-[#00e5a3] font-mono">Esperando decisión del comandante para otra misión...</span>
+          <div id="guestPlayAgain" class="hidden text-center py-3.5 game-panel rounded-xl border border-white/10">
+            <span class="text-xs text-[#e5aa52]">Esperando decisión del anfitrión para otra partida...</span>
           </div>
 
-          <button onclick="confirmLeaveMatch()" class="w-full text-slate-400 text-xs py-2 hover:text-white transition font-mono">
+          <button onclick="confirmLeaveMatch()" class="w-full text-stone-400 text-xs py-2 hover:text-white transition">
             ← Salir al Menú Principal
           </button>
         </div>
@@ -871,8 +790,8 @@
   </main>
 
   <!-- FOOTER -->
-  <footer class="relative z-10 mt-5 text-[11px] text-slate-400 text-center font-mono tracking-wider">
-    IMPOSTOR · STARSHIP AURORA · TACTICAL MULTIPLAYER P2P
+  <footer class="relative z-10 mt-5 text-[11px] text-stone-400 text-center tracking-wide">
+    El Impostor · Juego de deducción social
   </footer>
 
   <script>
@@ -936,14 +855,14 @@
     };
 
     /* =====================================================================
-       AUDIO SYNTHESIZER (Web Audio API)
+       AUDIO SYNTHESIZER SUAVE Y REALISTA (Web Audio API)
        ===================================================================== */
     let audioCtx = null;
     function ensureAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
     }
-    function playTone(freq = 440, type = 'sine', duration = 0.1, vol = 0.05) {
+    function playTone(freq = 440, type = 'sine', duration = 0.08, vol = 0.04) {
       try {
         ensureAudio();
         const osc = audioCtx.createOscillator();
@@ -958,50 +877,50 @@
         osc.stop(audioCtx.currentTime + duration);
       } catch (e) {}
     }
-    function soundClick() { playTone(680, 'sine', 0.04, 0.03); }
+    function soundClick() { playTone(540, 'sine', 0.04, 0.025); }
     function soundStart() {
-      playTone(440, 'triangle', 0.1, 0.04);
-      setTimeout(() => playTone(554, 'triangle', 0.1, 0.04), 90);
-      setTimeout(() => playTone(659, 'triangle', 0.12, 0.05), 180);
-      setTimeout(() => playTone(880, 'triangle', 0.25, 0.07), 270);
-      if (navigator.vibrate) navigator.vibrate([40, 50, 40, 50, 70]);
+      playTone(440, 'sine', 0.12, 0.04);
+      setTimeout(() => playTone(554, 'sine', 0.12, 0.04), 100);
+      setTimeout(() => playTone(659, 'sine', 0.2, 0.05), 200);
+      if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
     }
     function soundReady() {
-      playTone(740, 'sine', 0.08, 0.04);
+      playTone(620, 'sine', 0.08, 0.03);
       if (navigator.vibrate) navigator.vibrate(20);
     }
-    function soundTick() { playTone(800, 'triangle', 0.02, 0.02); }
+    function soundTick() { playTone(720, 'sine', 0.02, 0.015); }
     function soundAlert() {
-      playTone(330, 'sawtooth', 0.15, 0.04);
-      setTimeout(() => playTone(240, 'sawtooth', 0.25, 0.04), 140);
-      if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+      playTone(280, 'triangle', 0.18, 0.04);
+      setTimeout(() => playTone(220, 'triangle', 0.25, 0.04), 140);
+      if (navigator.vibrate) navigator.vibrate([50, 40, 50]);
     }
     function soundWin() {
-      [440, 554, 659, 880, 1108].forEach((f, i) => {
-        setTimeout(() => playTone(f, 'triangle', 0.2, 0.04), i * 110);
+      [440, 554, 659, 880].forEach((f, i) => {
+        setTimeout(() => playTone(f, 'sine', 0.22, 0.04), i * 110);
       });
     }
 
     /* =====================================================================
-       FONDO ESPACIAL AMBIENTAL (ESTRELLAS TITILANTES & CURVATURA PLANETARIA)
+       FONDO AMBIENTAL CÁLIDO Y SOBRIO (PARTÍCULAS SUTILES)
        ===================================================================== */
     (function initAmbientBackground() {
       const canvas = document.getElementById('ambient-canvas');
       const ctx = canvas.getContext('2d');
       let w, h;
-      let stars = [];
+      let motes = [];
 
       function resize() {
         w = canvas.width = window.innerWidth;
         h = canvas.height = window.innerHeight;
-        stars = [];
-        for (let i = 0; i < 90; i++) {
-          stars.push({
+        motes = [];
+        for (let i = 0; i < 35; i++) {
+          motes.push({
             x: Math.random() * w,
             y: Math.random() * h,
-            r: Math.random() * 1.6 + 0.4,
-            alpha: Math.random() * 0.7 + 0.2,
-            dAlpha: (Math.random() * 0.015 + 0.005) * (Math.random() > 0.5 ? 1 : -1)
+            r: Math.random() * 2 + 1,
+            alpha: Math.random() * 0.35 + 0.1,
+            vy: -0.15 - Math.random() * 0.2,
+            vx: (Math.random() - 0.5) * 0.2
           });
         }
       }
@@ -1011,22 +930,13 @@
       function draw() {
         ctx.clearRect(0, 0, w, h);
 
-        // Curvatura planetaria en la esquina inferior derecha (estilo Among Us / Sci-Fi HUD)
-        const planetGrad = ctx.createRadialGradient(w * 0.92, h * 0.95, 30, w * 0.92, h * 0.95, Math.max(w, h) * 0.6);
-        planetGrad.addColorStop(0, 'rgba(14, 165, 233, 0.28)');
-        planetGrad.addColorStop(0.35, 'rgba(6, 182, 212, 0.12)');
-        planetGrad.addColorStop(0.7, 'rgba(2, 6, 23, 0.03)');
-        planetGrad.addColorStop(1, 'transparent');
-        ctx.fillStyle = planetGrad;
-        ctx.fillRect(0, 0, w, h);
-
-        // Estrellas titilantes
-        stars.forEach(s => {
-          s.alpha += s.dAlpha;
-          if (s.alpha > 0.95 || s.alpha < 0.2) s.dAlpha *= -1;
+        motes.forEach(m => {
+          m.y += m.vy;
+          m.x += m.vx;
+          if (m.y < -10) { m.y = h + 10; m.x = Math.random() * w; }
           ctx.beginPath();
-          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(226, 232, 240, ${s.alpha})`;
+          ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(229, 170, 82, ${m.alpha})`;
           ctx.fill();
         });
 
@@ -1039,16 +949,16 @@
        EFECTO CONFETI
        ===================================================================== */
     function launchConfetti() {
-      const colors = ['#38bdf8','#f43f5e','#10b981','#fbbf24','#818cf8'];
-      for (let i = 0; i < 65; i++) {
+      const colors = ['#e5aa52','#df4638','#10b981','#fbbf24','#d4a373'];
+      for (let i = 0; i < 50; i++) {
         const el = document.createElement('div');
         el.className = 'confetti-piece';
         el.style.left = Math.random() * 100 + 'vw';
         el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        el.style.animationDuration = (Math.random() * 2 + 1.6) + 's';
-        el.style.animationDelay = (Math.random() * 0.6) + 's';
-        el.style.width = (Math.random() * 7 + 5) + 'px';
-        el.style.height = (Math.random() * 7 + 5) + 'px';
+        el.style.animationDuration = (Math.random() * 2 + 1.8) + 's';
+        el.style.animationDelay = (Math.random() * 0.5) + 's';
+        el.style.width = (Math.random() * 6 + 5) + 'px';
+        el.style.height = (Math.random() * 6 + 5) + 'px';
         if (Math.random() > 0.5) el.style.borderRadius = '50%';
         document.body.appendChild(el);
         setTimeout(() => el.remove(), 4200);
@@ -1075,9 +985,9 @@
       cancelBtn.innerText = cancelText;
 
       if (isDanger) {
-        confirmBtn.className = "btn-press w-full py-3 px-4 rounded-xl font-bold font-display text-xs sm:text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30";
+        confirmBtn.className = "btn-game-warning w-full py-2.5 px-3 text-xs";
       } else {
-        confirmBtn.className = "btn-press w-full py-3 px-4 rounded-xl font-bold font-display text-xs sm:text-sm bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-lg shadow-cyan-500/25";
+        confirmBtn.className = "btn-game-primary w-full py-2.5 px-3 text-xs";
       }
 
       modalConfirmCallback = onConfirm;
@@ -1160,14 +1070,14 @@
        ===================================================================== */
     function setBadge(text, dotClass = "bg-emerald-400") {
       document.getElementById('connStatus').innerText = text;
-      document.getElementById('connDot').className = `w-2.5 h-2.5 rounded-full ${dotClass}`;
+      document.getElementById('connDot').className = `w-2 h-2 rounded-full ${dotClass}`;
     }
 
     function showToast(msg, isError = false) {
       const toast = document.getElementById('toast');
       toast.innerText = msg;
-      toast.className = `mb-4 p-3.5 rounded-2xl text-xs sm:text-sm font-semibold text-center border shadow-lg font-mono ${
-        isError ? 'bg-rose-950/80 border-rose-500/50 text-rose-300' : 'bg-slate-900/90 border-cyan-500/40 text-cyan-300'
+      toast.className = `mb-4 p-3 rounded-xl text-xs sm:text-sm font-medium text-center border shadow-lg ${
+        isError ? 'bg-rose-950/70 border-rose-500/40 text-rose-300' : 'bg-[#1a1d27] border-[#e5aa52]/40 text-[#e5aa52]'
       }`;
       toast.classList.remove('hidden');
       clearTimeout(toast._timer);
@@ -1186,16 +1096,16 @@
         }
       });
 
-      // Mover activamente el botón verde / turquesa entre PLAY y REGLAS
+      // Alternar activamente el botón entre JUGAR y REGLAS
       const tabPlay = document.getElementById('navTabPlay');
       const tabRules = document.getElementById('navTabRules');
       if (tabPlay && tabRules) {
         if (viewId === 'view-rules') {
-          tabRules.className = 'px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-extrabold font-display uppercase tracking-wider bg-[#00e5a3] text-[#081626] shadow-sm transition';
-          tabPlay.className = 'px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-bold font-display uppercase tracking-wider text-slate-400 hover:text-white transition';
+          tabRules.className = 'px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#e5aa52] text-[#0e1015] shadow-sm transition';
+          tabPlay.className = 'px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider text-stone-400 hover:text-white transition';
         } else {
-          tabPlay.className = 'px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-extrabold font-display uppercase tracking-wider bg-[#00e5a3] text-[#081626] shadow-sm transition';
-          tabRules.className = 'px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-bold font-display uppercase tracking-wider text-slate-400 hover:text-white transition';
+          tabPlay.className = 'px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#e5aa52] text-[#0e1015] shadow-sm transition';
+          tabRules.className = 'px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider text-stone-400 hover:text-white transition';
         }
       }
 
@@ -1234,9 +1144,10 @@
       }
       switchView('view-rules');
     }
+
     function uiShowJoin() {
       const name = document.getElementById('inputName').value.trim();
-      if (!name) return showToast("Escribe tu apodo primero", true);
+      if (!name) return showToast("Escribe tu nombre primero", true);
       myName = name;
       localStorage.setItem('impostor_name', myName);
       soundClick();
@@ -1256,7 +1167,7 @@
         icon: '🚪',
         title: '¿Abandonar la partida?',
         message: 'Estás a punto de desconectarte de la sala. Tu lugar quedará vacante y volverás al menú inicial.',
-        confirmText: 'Sí, salir de la sala',
+        confirmText: 'Sí, salir',
         cancelText: 'Permanecer',
         isDanger: true,
         onConfirm: () => {
@@ -1274,7 +1185,7 @@
         icon: '↺',
         title: '¿Reiniciar sala de espera?',
         message: 'Como anfitrión, devolverás a todos los jugadores a la sala de espera para reconfigurar la partida.',
-        confirmText: 'Sí, reiniciar sala',
+        confirmText: 'Sí, reiniciar',
         cancelText: 'Continuar partida',
         isDanger: false,
         onConfirm: () => {
@@ -1300,7 +1211,7 @@
       impostorUUIDs = [];
       isHost = false;
       roomCode = "";
-      setBadge("Listo", "bg-slate-500");
+      setBadge("En línea", "bg-emerald-400");
       history.replaceState(null, '', window.location.pathname);
       switchView('view-home');
     }
@@ -1321,15 +1232,15 @@
         soundClick();
 
         if (myRoleData && myRoleData.isImpostor) {
-          wordText.innerText = "❓ ERES EL IMPOSTOR";
-          wordText.className = "text-3xl sm:text-5xl font-extrabold font-display text-rose-400 tracking-wide my-2";
-          roleText.innerText = "No conoces la palabra secreta. Escucha atentamente los testimonios e improvisa una pista verosímil.";
-          roleText.className = "text-xs sm:text-sm font-medium text-rose-200 max-w-md mx-auto";
+          wordText.innerText = "ERES EL IMPOSTOR";
+          wordText.className = "text-2xl sm:text-4xl font-bold font-serif text-rose-400 tracking-wide my-2";
+          roleText.innerText = "No conoces la palabra secreta. Escucha atentamente las pistas de los demás y disimula con una pista creíble.";
+          roleText.className = "text-xs sm:text-sm font-medium text-rose-200/90 max-w-md mx-auto";
         } else if (myRoleData) {
           wordText.innerText = myRoleData.word || "???";
-          wordText.className = "text-3xl sm:text-5xl font-extrabold font-display text-emerald-400 tracking-wide my-2";
-          roleText.innerText = "Tripulante: Esta es la palabra clave. Da una pista sutil para descubrir quién no la sabe.";
-          roleText.className = "text-xs sm:text-sm font-medium text-emerald-200 max-w-md mx-auto";
+          wordText.className = "text-2xl sm:text-4xl font-bold font-serif text-[#e5aa52] tracking-wide my-2";
+          roleText.innerText = "Esta es tu palabra clave. Da una pista sutil en voz alta para que los demás sepan que la conoces sin revelarla.";
+          roleText.className = "text-xs sm:text-sm font-medium text-stone-300 max-w-md mx-auto";
         }
         overlay.classList.add('active');
         if (navigator.vibrate) navigator.vibrate(25);
@@ -1372,7 +1283,7 @@
 
     function uiCreateRoom() {
       const name = document.getElementById('inputName').value.trim();
-      if (!name) return showToast("Escribe tu apodo primero", true);
+      if (!name) return showToast("Escribe tu nombre primero", true);
       myName = name;
       localStorage.setItem('impostor_name', myName);
       soundClick();
@@ -1385,7 +1296,7 @@
       peer = new Peer('imp-rm-' + roomCode, peerConfig);
 
       peer.on('open', () => {
-        setBadge("En Línea", "bg-emerald-400");
+        setBadge("En línea", "bg-emerald-400");
         players = [{ uuid: myUUID, name: myName, avatar: getAvatar(myUUID) }];
         scores[myUUID] = 0;
         document.getElementById('lblRoomCode').innerText = roomCode;
@@ -1454,14 +1365,14 @@
 
     function uiJoinRoom(forcedCode = null) {
       const code = forcedCode || document.getElementById('inputCode').value.trim();
-      if (code.length !== 4) return showToast("Código de 4 dígitos requerido", true);
+      if (code.length !== 4) return showToast("Ingresa un código de 4 dígitos", true);
       roomCode = code;
 
       if (!myName) {
         const name = document.getElementById('inputName').value.trim();
         if (!name) {
           switchView('view-home');
-          return showToast("Ingresa tu apodo para continuar", true);
+          return showToast("Ingresa tu nombre para continuar", true);
         }
         myName = name;
         localStorage.setItem('impostor_name', myName);
@@ -1477,12 +1388,13 @@
         hostConn = peer.connect('imp-rm-' + roomCode, { reliable: true });
 
         hostConn.on('open', () => {
-          setBadge("Conectado", "bg-emerald-400");
+          setBadge("En línea", "bg-emerald-400");
           hostConn.send({ type: 'JOIN', uuid: myUUID, name: myName });
           document.getElementById('lblRoomCode').innerText = roomCode;
           document.getElementById('hostSettings').classList.add('hidden');
           document.getElementById('boxHostControls').classList.add('hidden');
           document.getElementById('boxGuestWaiting').classList.remove('hidden');
+          renderLobbyPlayers();
           switchView('view-lobby');
           history.replaceState(null, '', `?sala=${roomCode}`);
         });
@@ -1505,7 +1417,7 @@
             updatePlayersTurnListUI();
           }
           else if (data.type === 'ROUND_ADVANCE_NOTICE') {
-            showToast(`¡Ronda ${data.round} completada! Iniciando Ronda ${data.round + 1}`);
+            showToast(`¡Ronda ${data.round} finalizada! Iniciando Ronda ${data.round + 1}`);
           }
           else if (data.type === 'START_VOTING') {
             openVotingView();
@@ -1557,17 +1469,17 @@
         const li = document.createElement('li');
         const isMe = p.uuid === myUUID;
         const isLeader = idx === 0;
-        li.className = "flex items-center justify-between game-panel-dark px-4 py-3 rounded-xl border-2 border-[#203a5e] text-xs sm:text-sm";
+        li.className = "flex items-center justify-between game-panel-dark px-3.5 py-2.5 rounded-xl border border-white/10 text-xs sm:text-sm";
         li.innerHTML = `
-          <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-full bg-[#14243b] border-2 border-[#00e5a3] flex items-center justify-center text-base">${p.avatar}</span>
-            <span class="font-bold font-display ${isMe ? 'text-[#00e5a3]' : 'text-slate-200'}">
-              ${p.name}${isMe ? ' <span class="text-[10px] text-slate-400 font-mono">(Tú)</span>' : ''}
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-full bg-[#1a1d27] border border-white/10 flex items-center justify-center text-sm">${p.avatar}</span>
+            <span class="font-semibold ${isMe ? 'text-[#e5aa52]' : 'text-stone-200'}">
+              ${p.name}${isMe ? ' <span class="text-[10px] text-stone-400 font-mono">(Tú)</span>' : ''}
             </span>
           </div>
           <div class="flex items-center gap-2">
-            ${scores[p.uuid] !== undefined ? `<span class="game-pill bg-[#0a1320] text-cyan-300 border-cyan-500/30">${scores[p.uuid]} pts</span>` : ''}
-            ${isLeader ? '<span class="game-pill bg-[#0a1320] text-[#ff8c32] border-[#ff8c32]/50">HOST</span>' : '<span class="text-xs text-[#00e5a3] font-mono font-bold">LISTO ✓</span>'}
+            ${scores[p.uuid] !== undefined ? `<span class="game-pill bg-[#101218] text-[#e5aa52] border-[#e5aa52]/30">${scores[p.uuid]} pts</span>` : ''}
+            ${isLeader ? '<span class="game-pill bg-[#101218] text-[#e5aa52] border-[#e5aa52]/40 font-bold">ANFITRIÓN</span>' : '<span class="text-xs text-emerald-400 font-mono font-medium">Listo ✓</span>'}
           </div>
         `;
         list.appendChild(li);
@@ -1602,9 +1514,9 @@
       if (players.length < 3) {
         openCustomModal({
           icon: '👥',
-          title: '¿Iniciar partida de prueba?',
-          message: 'Hay menos de 3 jugadores conectados. El juego es óptimo con al menos 3 personas. ¿Deseas iniciarla como prueba de todas formas?',
-          confirmText: 'Comenzar de prueba',
+          title: '¿Iniciar con pocos jugadores?',
+          message: 'Hay menos de 3 personas conectadas. El juego es más divertido con al menos 3 jugadores. ¿Deseas iniciarla como prueba de todas formas?',
+          confirmText: 'Comenzar igual',
           cancelText: 'Esperar más amigos',
           isDanger: false,
           onConfirm: () => {
@@ -1724,12 +1636,12 @@
         turnCard.classList.add('turn-glow');
         myActionContainer.classList.remove('hidden');
         waitActionContainer.classList.add('hidden');
-        document.getElementById('turnSubtitle').innerHTML = '👉 <strong>¡Tienes el turno!</strong> Da tu pista en voz alta y presiona listo:';
+        document.getElementById('turnSubtitle').innerHTML = '👉 <strong>¡Es tu turno!</strong> Di tu pista en voz alta y marca listo:';
 
         btnReady.disabled = false;
         btnReady.classList.remove('opacity-50', 'pointer-events-none');
-        btnReady.innerHTML = '<span>✅</span> <span>YA DI MI PISTA — MARCAR LISTO</span>';
-        btnReady.className = 'btn-game-primary w-full py-4 sm:py-5 text-sm sm:text-base uppercase tracking-wider flex items-center justify-center gap-2';
+        btnReady.innerHTML = '<span>✓</span> <span>He dado mi pista — Marcar Listo</span>';
+        btnReady.className = 'btn-game-primary w-full py-4 text-sm sm:text-base uppercase tracking-wider flex items-center justify-center gap-2';
       } else {
         turnCard.classList.remove('turn-glow');
         myActionContainer.classList.add('hidden');
@@ -1752,22 +1664,22 @@
         const isStarter = p.uuid === starterUUID;
 
         const div = document.createElement('div');
-        div.className = `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm transition ${
-          isCurrent ? 'bg-[#14243b] border-2 border-[#00e5a3] font-bold shadow-md' :
-          isReady ? 'game-panel-dark border-2 border-[#00e5a3]/40 text-slate-200' :
-          'game-panel-dark border-2 border-[#203a5e] text-slate-400'
+        div.className = `flex items-center justify-between px-3 py-2 rounded-xl text-xs sm:text-sm transition ${
+          isCurrent ? 'bg-[#1a1d27] border border-[#e5aa52] font-bold shadow-sm' :
+          isReady ? 'game-panel-dark border border-emerald-500/30 text-stone-200' :
+          'game-panel-dark border border-white/5 text-stone-400'
         }`;
 
         div.innerHTML = `
           <div class="flex items-center gap-2.5">
-            <span class="w-7 h-7 rounded-full bg-[#14243b] border border-[#203a5e] flex items-center justify-center text-sm">${p.avatar}</span>
-            <span class="${isCurrent ? 'text-white font-bold' : isReady ? 'text-[#00e5a3]' : 'text-slate-300'}">
-              ${p.name} ${p.uuid === myUUID ? '<span class="text-[10px] text-slate-400 font-mono">(Tú)</span>' : ''}
-              ${isStarter ? '<span class="game-pill bg-[#0a1320] text-cyan-300 border-cyan-500/30 ml-1 py-0.5 px-1.5 text-[9px]">1º</span>' : ''}
+            <span class="w-6 h-6 rounded-full bg-[#101218] border border-white/10 flex items-center justify-center text-xs">${p.avatar}</span>
+            <span class="${isCurrent ? 'text-white font-bold' : isReady ? 'text-emerald-400 font-medium' : 'text-stone-300'}">
+              ${p.name} ${p.uuid === myUUID ? '<span class="text-[10px] text-stone-400 font-mono">(Tú)</span>' : ''}
+              ${isStarter ? '<span class="game-pill bg-[#101218] text-[#e5aa52] border-[#e5aa52]/30 ml-1 py-0.5 px-1.5 text-[9px]">1º</span>' : ''}
             </span>
           </div>
           <span class="text-xs font-mono">
-            ${isReady ? '<span class="text-[#00e5a3] flex items-center gap-1 font-bold">READY ✓</span>' : isCurrent ? '<span class="text-[#ff8c32] animate-pulse font-bold">HABLANDO 🎙️</span>' : '<span class="text-slate-500">EN ESPERA</span>'}
+            ${isReady ? '<span class="text-emerald-400 flex items-center gap-1 font-medium">Listo ✓</span>' : isCurrent ? '<span class="text-[#e5aa52] font-semibold">Hablando 🎙️</span>' : '<span class="text-stone-500">En espera</span>'}
           </span>
         `;
         container.appendChild(div);
@@ -1780,8 +1692,8 @@
 
       const btnReady = document.getElementById('btnReady');
       btnReady.disabled = true;
-      btnReady.innerHTML = '<span>⏳</span> <span>PISTA REGISTRADA — ESPERANDO...</span>';
-      btnReady.className = 'btn-game-secondary w-full py-4 sm:py-5 text-sm sm:text-base uppercase tracking-wider flex items-center justify-center gap-2 opacity-60 pointer-events-none';
+      btnReady.innerHTML = '<span>⏳</span> <span>Pista registrada — Esperando...</span>';
+      btnReady.className = 'btn-game-secondary w-full py-4 text-sm sm:text-base uppercase tracking-wider flex items-center justify-center gap-2 opacity-60 pointer-events-none';
 
       if (isHost) {
         broadcast({ type: 'READY_SYNC', readyList: [...readyPlayers] });
@@ -1878,7 +1790,6 @@
       stopTurnTimer();
       const timerContainer = document.getElementById('timerContainer');
       const timerText = document.getElementById('timerText');
-      const timerCircle = document.getElementById('timerCircle');
 
       if (!turnTimeLimit || turnTimeLimit <= 0) {
         timerContainer.classList.add('hidden');
@@ -1912,11 +1823,11 @@
       if (timerText) {
         timerText.innerText = Math.max(0, timeLeft) < 10 ? `0${Math.max(0, timeLeft)}` : Math.max(0, timeLeft);
         if (timeLeft <= 10) {
-          timerText.className = 'font-mono font-black text-2xl sm:text-3xl text-rose-400 animate-pulse';
+          timerText.className = 'font-mono font-bold text-2xl text-rose-400 animate-pulse';
         } else if (timeLeft <= 20) {
-          timerText.className = 'font-mono font-black text-2xl sm:text-3xl text-[#ff8c32]';
+          timerText.className = 'font-mono font-bold text-2xl text-amber-400';
         } else {
-          timerText.className = 'font-mono font-black text-2xl sm:text-3xl text-[#00e5a3]';
+          timerText.className = 'font-mono font-bold text-2xl text-[#e5aa52]';
         }
       }
     }
@@ -1948,13 +1859,13 @@
       players.forEach(p => {
         if (p.uuid === myUUID) return;
         const btn = document.createElement('button');
-        btn.className = "btn-press w-full flex items-center justify-between p-4 rounded-xl game-panel-dark border-2 border-[#203a5e] hover:border-[#00e5a3] text-left transition shadow-md group";
+        btn.className = "btn-press w-full flex items-center justify-between p-3.5 rounded-xl game-panel-dark border border-white/10 hover:border-[#e5aa52] text-left transition shadow-sm group";
         btn.innerHTML = `
           <div class="flex items-center gap-3">
-            <span class="w-10 h-10 rounded-full bg-[#14243b] border-2 border-[#203a5e] group-hover:border-[#00e5a3] flex items-center justify-center text-xl transition-transform group-hover:scale-105">${p.avatar}</span>
-            <span class="font-bold font-display text-sm sm:text-base text-white">${p.name}</span>
+            <span class="w-9 h-9 rounded-full bg-[#1a1d27] border border-white/10 group-hover:border-[#e5aa52] flex items-center justify-center text-lg transition-transform group-hover:scale-105">${p.avatar}</span>
+            <span class="font-semibold text-sm sm:text-base text-white">${p.name}</span>
           </div>
-          <span class="btn-game-primary text-xs px-3.5 py-1.5 uppercase tracking-wider">VOTAR</span>
+          <span class="btn-game-primary text-xs px-3.5 py-1.5 uppercase tracking-wider font-bold">VOTAR</span>
         `;
         btn.onclick = () => castVote(p.uuid);
         container.appendChild(btn);
@@ -2062,24 +1973,24 @@
       container.innerHTML = '';
       data.results.forEach(r => {
         const div = document.createElement('div');
-        div.className = "flex items-center justify-between p-3 rounded-xl game-panel-dark border-2 border-[#203a5e]";
+        div.className = "flex items-center justify-between p-3 rounded-xl game-panel-dark border border-white/10";
         div.innerHTML = `
           <div class="flex items-center gap-2.5">
-            <span class="w-8 h-8 rounded-full bg-[#14243b] border border-[#203a5e] flex items-center justify-center text-base">${r.avatar}</span>
-            <span class="font-bold text-white font-display">${r.name}</span>
+            <span class="w-7 h-7 rounded-full bg-[#1a1d27] border border-white/10 flex items-center justify-center text-sm">${r.avatar}</span>
+            <span class="font-semibold text-white">${r.name}</span>
           </div>
-          <span class="font-mono font-bold text-[#00e5a3] bg-[#0a1320] px-2.5 py-1 rounded-lg border border-[#00e5a3]/30">${r.votes} ${r.votes === 1 ? 'voto' : 'votos'}</span>
+          <span class="font-mono font-bold text-[#e5aa52] bg-[#101218] px-2.5 py-1 rounded-lg border border-[#e5aa52]/20">${r.votes} ${r.votes === 1 ? 'voto' : 'votos'}</span>
         `;
         container.appendChild(div);
       });
 
       const verdict = document.getElementById('roundVerdict');
       verdict.innerHTML = `
-        <div class="text-slate-400 text-xs font-mono mb-1 uppercase tracking-wider">Resultado de la reunión:</div>
-        <div class="text-lg font-black font-display text-white">Más votado: <span class="text-[#ff8c32]">${data.eliminatedName}</span></div>
-        <div class="text-xs sm:text-sm text-slate-300 mt-1.5 font-normal">La misión continúa. Aún quedan testimonios por dar en la siguiente ronda.</div>
+        <div class="text-stone-400 text-xs font-mono mb-1 uppercase tracking-wider">Resultado de la reunión:</div>
+        <div class="text-base font-bold text-white">Más votado: <span class="text-rose-400 font-serif">${data.eliminatedName}</span></div>
+        <div class="text-xs text-stone-300 mt-1 font-normal">La partida continúa. Aún quedan pistas por dar en la siguiente ronda.</div>
       `;
-      verdict.className = "p-5 rounded-xl border-2 border-[#203a5e] bg-[#14243b] text-sm";
+      verdict.className = "p-4 rounded-xl border border-white/10 bg-[#1a1d27] text-sm";
 
       if (isHost) {
         document.getElementById('hostRoundControls').classList.remove('hidden');
@@ -2113,14 +2024,14 @@
       const winAnnounce = document.getElementById('winnerAnnouncement');
       if (data.impostorCaught) {
         document.getElementById('resultEmoji').innerText = '🎉';
-        winAnnounce.innerHTML = '🏆 ¡Los <strong>TRIPULANTES</strong> descubrieron al impostor!';
-        winAnnounce.className = "p-4 rounded-xl text-sm sm:text-base font-black bg-[#0a1320] border-2 border-[#00e5a3] text-[#00e5a3] font-display";
+        winAnnounce.innerHTML = '🏆 ¡Los <strong>JUGADORES</strong> descubrieron al impostor!';
+        winAnnounce.className = "p-3.5 rounded-xl text-xs sm:text-sm font-bold bg-[#101218] border border-emerald-500/40 text-emerald-400";
         launchConfetti();
         soundWin();
       } else {
-        document.getElementById('resultEmoji').innerText = '😈';
-        winAnnounce.innerHTML = '💀 ¡El <strong>IMPOSTOR</strong> saboteó la nave y gana la partida!';
-        winAnnounce.className = "p-4 rounded-xl text-sm sm:text-base font-black bg-[#0a1320] border-2 border-rose-500 text-rose-400 font-display";
+        document.getElementById('resultEmoji').innerText = '🎭';
+        winAnnounce.innerHTML = '💀 ¡El <strong>IMPOSTOR</strong> engañó a todos y gana la partida!';
+        winAnnounce.className = "p-3.5 rounded-xl text-xs sm:text-sm font-bold bg-[#101218] border border-rose-500/40 text-rose-400";
         if (impostorUUIDs.includes(myUUID)) {
           launchConfetti();
           soundWin();
@@ -2134,16 +2045,16 @@
       sorted.forEach((p, idx) => {
         const isImp = impostorUUIDs.includes(p.uuid);
         const div = document.createElement('div');
-        div.className = `flex items-center justify-between p-3 rounded-xl border-2 ${
-          idx === 0 ? 'bg-[#14243b] border-[#00e5a3] font-bold' : 'game-panel-dark border-[#203a5e]'
+        div.className = `flex items-center justify-between p-2.5 rounded-xl border ${
+          idx === 0 ? 'bg-[#1a1d27] border-[#e5aa52]/50 font-bold' : 'game-panel-dark border-white/10'
         }`;
         div.innerHTML = `
-          <div class="flex items-center gap-2.5">
-            <span class="w-7 h-7 rounded-full bg-[#0a1320] border border-[#203a5e] flex items-center justify-center text-sm">${idx === 0 ? '👑' : ''} ${p.avatar}</span>
-            <span class="${isImp ? 'text-rose-400 font-bold' : 'text-white font-semibold'}">${p.name}</span>
-            ${isImp ? '<span class="game-pill bg-[#0a1320] text-rose-400 border-rose-500/50 ml-1 py-0.5 px-2">IMPOSTOR</span>' : ''}
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-[#101218] border border-white/10 flex items-center justify-center text-xs">${idx === 0 ? '👑' : ''} ${p.avatar}</span>
+            <span class="${isImp ? 'text-rose-400 font-bold' : 'text-stone-200 font-semibold'}">${p.name}</span>
+            ${isImp ? '<span class="game-pill bg-[#101218] text-rose-400 border-rose-500/40 ml-1 py-0.5 px-2">IMPOSTOR</span>' : ''}
           </div>
-          <span class="game-pill bg-[#0a1320] text-[#00e5a3] border-[#00e5a3]/40 font-mono">${scores[p.uuid] || 0} pts</span>
+          <span class="game-pill bg-[#101218] text-[#e5aa52] border-[#e5aa52]/30 font-mono">${scores[p.uuid] || 0} pts</span>
         `;
         board.appendChild(div);
       });
