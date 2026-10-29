@@ -2,274 +2,955 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>El Impostor - Multiplayer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a192f">
+  <title>El Impostor - Misterio y Deducción</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind Config MUST be defined BEFORE loading Tailwind CDN script -->
+  <script>
+    tailwind = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
   <style>
-    @keyframes pulse-subtle {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.85; transform: scale(0.98); }
+    *, *::before, *::after { box-sizing: border-box; }
+    
+    /* =========================================================================
+       DIRECCIÓN DE ARTE: HUD TÁCTICO ESPACIAL / ESTILO AMONG US & SUBTERFUGE
+       Consolas de mando sólidas (#0f1c2e / #14243b), bordes mecánicos de 2px (#203a5e),
+       Turquesa Menta (#00e5a3) para acciones principales y Naranja Alerta (#ff8c32) para emergencias.
+       ========================================================================= */
+    html, body {
+      margin: 0; padding: 0; min-height: 100%;
+      background-color: #060d19;
+      color: #e2e8f0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     }
-    .animate-pulse-subtle { animation: pulse-subtle 2s infinite ease-in-out; }
+    
+    body {
+      padding-top: max(12px, env(safe-area-inset-top));
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+      background-color: #060d19;
+      background-image: 
+        radial-gradient(circle at 90% 92%, rgba(14, 165, 233, 0.28) 0%, rgba(6, 13, 25, 0.9) 45%, transparent 70%),
+        radial-gradient(circle at 10% 12%, rgba(255, 140, 50, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(15, 28, 46, 0.6) 0%, transparent 100%),
+        linear-gradient(180deg, #070e1c 0%, #050b16 100%);
+      background-attachment: fixed;
+    }
+    
     .prevent-select { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
+    /* Starfield Canvas Background */
+    #ambient-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.95; }
+
+    /* CONSOLA DE MANDO DE NAVE ESPACIAL (CABINA SÓLIDA, NO GLASSMORPHISM BORROSO) */
+    .game-console, .mystery-card {
+      background: #0f1c2e;
+      border: 2px solid #203a5e;
+      border-radius: 22px;
+      box-shadow: 
+        0 24px 60px rgba(0, 0, 0, 0.9),
+        0 0 40px rgba(14, 165, 233, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    /* SUB-PANELES DE CONTROL */
+    .game-panel, .mystery-subcard {
+      background: #14243b;
+      border: 2px solid #213c60;
+      border-radius: 16px;
+      box-shadow: 
+        0 6px 18px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .game-panel-dark, .mystery-subcard-dark {
+      background: #0a1320;
+      border: 1.5px solid #1c3352;
+      border-radius: 14px;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+    }
+
+    /* BOTONES TÁCTILES ESTILO VIDEOJUEGO (CON RELIEVE 3D Y EFECTO DE PULSACIÓN) */
+
+    /* 1. Primario: Turquesa Menta (#00e5a3) -> READY, VOTE, PLAY, CREAR SALA */
+    .btn-game-primary {
+      background: #00e5a3;
+      color: #081626 !important;
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      font-weight: 800;
+      border: 2px solid #00c78d;
+      border-radius: 14px;
+      box-shadow: 0 4px 0 #00996c, 0 8px 16px rgba(0, 229, 163, 0.25);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+      touch-action: manipulation;
+    }
+    .btn-game-primary:hover {
+      background: #06f0ad;
+      filter: brightness(1.04);
+    }
+    .btn-game-primary:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #00996c, 0 2px 6px rgba(0, 229, 163, 0.2);
+    }
+
+    /* 2. Alerta / Omisión: Naranja Mandarina (#ff8c32) -> SKIP, IMPOSTOR, EMERGENCIAS */
+    .btn-game-warning {
+      background: #ff8c32;
+      color: #081626 !important;
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      font-weight: 800;
+      border: 2px solid #e07420;
+      border-radius: 14px;
+      box-shadow: 0 4px 0 #b3550f, 0 8px 16px rgba(255, 140, 50, 0.25);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+      touch-action: manipulation;
+    }
+    .btn-game-warning:hover {
+      background: #ffa14f;
+      filter: brightness(1.04);
+    }
+    .btn-game-warning:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #b3550f, 0 2px 6px rgba(255, 140, 50, 0.2);
+    }
+
+    /* 3. Consola Secundaria: Azul Pizarra con borde cian */
+    .btn-game-secondary {
+      background: #182b45;
+      color: #e2e8f0;
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      font-weight: 700;
+      border: 2px solid #294873;
+      border-radius: 14px;
+      box-shadow: 0 4px 0 #101d2e;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+      touch-action: manipulation;
+    }
+    .btn-game-secondary:hover {
+      background: #203758;
+      border-color: #38bdf8;
+      color: #ffffff;
+    }
+    .btn-game-secondary:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #101d2e;
+    }
+
+    /* Generic btn-press compatibility */
+    .btn-press {
+      transition: transform 0.08s ease, filter 0.08s ease;
+      touch-action: manipulation;
+    }
+    .btn-press:active {
+      transform: scale(0.97);
+    }
+
+    /* HUD Pills & Badges */
+    .game-pill, .stamp-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      border: 1.5px solid currentColor;
+    }
+
+    /* Top HUD Secret Word Visor */
+    #topPeekOverlay {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 99999;
+      padding: calc(max(14px, env(safe-area-inset-top)) + 10px) 24px 20px;
+      background: #091322;
+      border-bottom: 3px solid #00e5a3;
+      transform: translateY(-110%);
+      transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.18s ease;
+      opacity: 0; pointer-events: none; text-align: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.95);
+    }
+    #topPeekOverlay.active {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Digital Meeting Timer */
+    .timer-digital-box {
+      background: #0a1320;
+      border: 2px solid #203a5e;
+      border-radius: 16px;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.7);
+    }
+
+    /* Radar sweep animation */
+    @keyframes radarPulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 229, 163, 0.6); }
+      70% { box-shadow: 0 0 0 14px rgba(0, 229, 163, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 229, 163, 0); }
+    }
+    .radar-pulse { animation: radarPulse 2s infinite ease-out; }
+
+    @keyframes speakerGlow {
+      0%, 100% { border-color: #00e5a3; box-shadow: 0 0 20px rgba(0, 229, 163, 0.4); }
+      50% { border-color: #203a5e; box-shadow: 0 0 6px rgba(0, 229, 163, 0.1); }
+    }
+    .turn-glow { animation: speakerGlow 1.8s infinite ease-in-out; }
+
+    /* Views */
+    .view-section {
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .view-section.hidden {
+      display: none; opacity: 0; transform: translateY(6px);
+    }
+    .view-section:not(.hidden) {
+      display: block; opacity: 1; transform: translateY(0);
+    }
+
+    /* Confetti */
+    @keyframes confettiFall {
+      0% { transform: translateY(-5vh) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+    }
+    .confetti-piece {
+      position: fixed; top: -10px; z-index: 99998;
+      animation: confettiFall linear forwards;
+      pointer-events: none;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0a1320; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb { background: #203a5e; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: #00e5a3; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-3 font-sans prevent-select">
+<body class="flex flex-col items-center justify-center p-2 sm:p-4 md:p-6 font-sans prevent-select min-h-screen">
 
-  <!-- CONTENEDOR PRINCIPAL -->
-  <main class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+  <!-- AMBIENT CANVAS (ESPACIO PROFUNDO, ESTRELLAS Y CURVATURA PLANETARIA) -->
+  <canvas id="ambient-canvas"></canvas>
 
-    <!-- CABECERA -->
-    <header class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-      <div class="flex items-center gap-2">
-        <span class="text-2xl">🕵️‍♂️</span>
-        <h1 class="text-xl font-black tracking-wider text-amber-400">EL IMPOSTOR</h1>
+  <!-- TOP HOLD-TO-REVEAL SECRET WORD VISOR (HUD ESPACIAL) -->
+  <div id="topPeekOverlay">
+    <div class="max-w-2xl mx-auto">
+      <div class="flex items-center justify-center gap-2 text-xs uppercase tracking-[0.25em] text-[#00e5a3] font-mono font-bold mb-1">
+        <span>🔒</span> DESCLASIFICACIÓN DE SEGURIDAD (MANTÉN PRESIONADO)
       </div>
-      <div id="connBadge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs font-medium text-slate-400">
-        <span id="connDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
-        <span id="connStatus">Listo</span>
+      <div id="topPeekWord" class="text-3xl sm:text-5xl font-black font-display text-white tracking-wider my-2"></div>
+      <div id="topPeekRole" class="text-xs sm:text-sm font-medium max-w-md mx-auto text-slate-300"></div>
+    </div>
+  </div>
+
+  <!-- THEMED CUSTOM CONFIRMATION MODAL (VIDEOJUEGO ESPACIAL) -->
+  <div id="customModal" class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-[#050b16]/90 backdrop-blur-md hidden transition-opacity duration-200">
+    <div class="game-console max-w-md w-full p-6 sm:p-8 rounded-2xl border-2 border-rose-500/50 shadow-2xl space-y-4 text-center transform transition-transform duration-200 scale-95" id="customModalBox">
+      <div id="customModalIcon" class="w-16 h-16 mx-auto rounded-2xl bg-[#0a1320] border-2 border-[#203a5e] flex items-center justify-center text-3xl sm:text-4xl shadow-inner">
+        🚪
+      </div>
+      <div class="space-y-1.5">
+        <h3 id="customModalTitle" class="text-lg sm:text-xl font-black font-display text-white tracking-wide uppercase">¿Abandonar la misión?</h3>
+        <p id="customModalMessage" class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-sm mx-auto font-sans">
+          Estás a punto de desconectarte de la sala. Tu lugar en la tripulación quedará vacante.
+        </p>
+      </div>
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button id="customModalCancelBtn" onclick="closeCustomModal()" class="btn-game-secondary w-full py-3 px-4 text-xs sm:text-sm">
+          Permanecer
+        </button>
+        <button id="customModalConfirmBtn" class="btn-game-warning w-full py-3 px-4 text-xs sm:text-sm">
+          Confirmar salida
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER (CABINA PRINCIPAL / HUD DE NAVE ESPACIAL) -->
+  <main class="w-full max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl game-console rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl relative z-10 my-auto transition-all duration-300" id="mainContainer">
+
+    <!-- TOP GAME NAVBAR (ESTILO VIDEOJUEGO DE LA REFERENCIA) -->
+    <header class="flex items-center justify-between border-b-2 border-[#1f3a5e] pb-4 mb-6 px-1">
+      <!-- LOGO ESTILO IMPOSTOR ESPACIAL -->
+      <div class="flex items-center gap-3 cursor-pointer group" onclick="handleNavigationHome()">
+        <div class="w-10 h-10 rounded-xl bg-[#14243b] border-2 border-[#00e5a3] flex items-center justify-center text-xl shadow-lg shadow-[#00e5a3]/20 group-hover:scale-105 transition-transform">
+          🚀
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl sm:text-2xl font-black font-display tracking-widest text-white leading-none">
+              IMPOS<span class="text-[#00e5a3]">T</span>OR
+            </h1>
+            <span class="game-pill text-[10px] bg-[#14243b] text-[#00e5a3] border-[#00e5a3]/40">
+              HUD ESPACIAL
+            </span>
+          </div>
+          <span class="text-[10px] text-slate-400 font-mono tracking-wider">STARSHIP AURORA · TACTICAL MULTIPLAYER</span>
+        </div>
+      </div>
+
+      <!-- CENTER NAV TABS (COMO EN LA IMAGEN DE REFERENCIA: PLAY / LOBBY / REGLAS) -->
+      <div class="flex items-center gap-1 bg-[#0a1320] p-1 sm:p-1.5 rounded-full border-2 border-[#203a5e]">
+        <button id="navTabPlay" onclick="uiShowHome()" class="px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-extrabold font-display uppercase tracking-wider bg-[#00e5a3] text-[#081626] shadow-sm transition">
+          PLAY
+        </button>
+        <button id="navTabRules" onclick="uiShowRules()" class="px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-bold font-display uppercase tracking-wider text-slate-400 hover:text-white transition">
+          REGLAS
+        </button>
+      </div>
+
+      <!-- PROFILE & STATUS CHIP -->
+      <div class="flex items-center gap-3">
+        <!-- SINGLE UNIFIED LEAVE BUTTON -->
+        <button id="btnHeaderLeave" onclick="confirmLeaveMatch()" class="hidden px-3 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border-2 border-rose-500/50 text-xs font-bold font-mono btn-press flex items-center gap-1.5 shadow-sm transition">
+          <span>🚪</span> <span class="hidden sm:inline">Abandonar</span>
+        </button>
+
+        <div id="connBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0a1320] border-2 border-[#203a5e] text-xs font-mono font-medium text-slate-300 shadow-inner">
+          <span id="connDot" class="w-2.5 h-2.5 rounded-full bg-[#00e5a3] shadow-[0_0_8px_#00e5a3]"></span>
+          <span id="connStatus" class="font-bold text-[11px] text-[#00e5a3]">ONLINE</span>
+        </div>
       </div>
     </header>
 
-    <!-- NOTIFICACIONES TOAST -->
-    <div id="toast" class="hidden mb-3 p-3 rounded-xl text-xs font-semibold text-center transition-all"></div>
+    <!-- TOAST NOTIFICATIONS -->
+    <div id="toast" class="hidden mb-4 p-3.5 rounded-xl text-xs sm:text-sm font-semibold text-center transition-all shadow-lg font-mono bg-[#14243b] border-2 border-[#00e5a3] text-[#00e5a3]"></div>
 
-    <!-- ==================== VISTA 1: INICIO ==================== -->
-    <section id="view-home" class="space-y-4">
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tu Apodo</label>
-        <input id="inputName" type="text" maxlength="14" placeholder="Ej: Felipe" class="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-xl px-4 py-3 text-white text-base focus:outline-none transition">
-      </div>
+    <!-- ==================== VIEW 1: HOME ==================== -->
+    <section id="view-home" class="view-section">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
 
-      <div class="grid grid-cols-2 gap-3 pt-1">
-        <button onclick="uiCreateRoom()" class="w-full bg-amber-500 active:bg-amber-600 text-slate-950 font-black py-3.5 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition">
-          CREAR SALA
-        </button>
-        <button onclick="uiShowJoin()" class="w-full bg-slate-800 active:bg-slate-700 text-white font-bold py-3.5 rounded-xl border border-slate-700 active:scale-95 transition">
-          UNIRSE
-        </button>
-      </div>
+        <!-- Columna Izquierda: STARSHIP AURORA & RADAR MAP (COMO LA REFERENCIA) -->
+        <div class="lg:col-span-7 space-y-5">
+          <!-- Main Deck Console -->
+          <div class="game-panel p-5 sm:p-7 rounded-2xl border-2 border-[#203a5e] relative overflow-hidden">
+            <div class="flex items-center justify-between border-b border-[#203a5e] pb-3 mb-4">
+              <div class="flex items-center gap-2">
+                <span class="game-pill bg-[#0a1320] text-[#00e5a3] border-[#00e5a3]/50">IN PROGRESS</span>
+                <span class="game-pill bg-[#0a1320] text-[#ff8c32] border-[#ff8c32]/50">IMPOSTER</span>
+              </div>
+              <span class="text-xs font-mono font-bold text-slate-400">8 MAX CREW</span>
+            </div>
 
-      <div class="pt-3 border-t border-slate-800/80 text-center">
-        <p class="text-[11px] text-slate-500">Ideal para jugar en reuniones o por videollamada</p>
+            <div class="space-y-2 mb-4">
+              <h2 class="text-2xl sm:text-4xl font-black font-display text-white tracking-wide uppercase">
+                STARSHIP AURORA
+              </h2>
+              <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
+                Un impostor se ha infiltrado en la nave. Todos conocen el código de navegación secreto excepto él. Den pistas sutiles en cada ronda para descubrir quién miente antes de la reunión de votación.
+              </p>
+            </div>
+
+            <!-- Visual Sci-Fi Schematic / Radar Grid -->
+            <div class="game-panel-dark p-4 rounded-xl border border-[#203a5e] flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-[#14243b] border-2 border-[#00e5a3] flex items-center justify-center text-2xl radar-pulse">
+                  🛰️
+                </div>
+                <div>
+                  <div class="text-xs font-bold font-mono text-[#00e5a3] uppercase tracking-wider">RADAR DE TRIPULACIÓN</div>
+                  <div class="text-[11px] text-slate-400 font-sans">Canal P2P directo · Sin servidores centrales</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 font-mono text-xs">
+                <span class="px-2.5 py-1 rounded-lg bg-[#14243b] text-cyan-300 border border-cyan-500/30">CANAL SEGURO</span>
+              </div>
+            </div>
+
+            <!-- Objectives List (Estilo Among Us en la esquina inferior izquierda) -->
+            <div class="mt-4 pt-4 border-t border-[#203a5e] grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+              <div class="game-panel-dark p-3 rounded-xl border border-[#203a5e]">
+                <div class="text-[10px] font-mono font-bold text-[#00e5a3] uppercase">FASE 1</div>
+                <div class="text-xs font-bold text-white mt-0.5">Palabra Clave</div>
+                <div class="text-[11px] text-slate-400">Desclasificada en visor</div>
+              </div>
+              <div class="game-panel-dark p-3 rounded-xl border border-[#203a5e]">
+                <div class="text-[10px] font-mono font-bold text-[#ff8c32] uppercase">FASE 2</div>
+                <div class="text-xs font-bold text-white mt-0.5">Pistas por Turno</div>
+                <div class="text-[11px] text-slate-400">Una declaración sutil</div>
+              </div>
+              <div class="game-panel-dark p-3 rounded-xl border border-[#203a5e]">
+                <div class="text-[10px] font-mono font-bold text-cyan-400 uppercase">FASE 3</div>
+                <div class="text-xs font-bold text-white mt-0.5">Votación en Reunión</div>
+                <div class="text-[11px] text-slate-400">Activa desde Ronda 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna Derecha: Terminal de Acceso (Botones estilo Videojuego) -->
+        <div class="lg:col-span-5 space-y-5">
+          <div class="game-panel p-6 sm:p-7 rounded-2xl border-2 border-[#203a5e] shadow-xl space-y-5">
+            <div class="border-b border-[#203a5e] pb-3">
+              <div class="text-xs font-mono font-bold text-[#00e5a3] tracking-widest uppercase flex items-center gap-2">
+                <span>⚡</span> <span>TERMINAL DE TRIPULANTE</span>
+              </div>
+              <div class="text-[11px] text-slate-400 mt-1">Configura tu callsign de nave para ingresar al sistema</div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
+                TU APODO DE TRIPULANTE:
+              </label>
+              <input id="inputName" type="text" maxlength="14" placeholder="Ej: Comandante Nova"
+                     class="w-full bg-[#0a1320] border-2 border-[#203a5e] focus:border-[#00e5a3] rounded-xl px-4 py-3.5 text-white text-base font-bold focus:outline-none focus:ring-2 focus:ring-[#00e5a3]/30 transition placeholder:text-slate-500 shadow-inner font-sans">
+            </div>
+
+            <div class="space-y-3 pt-2">
+              <button onclick="uiCreateRoom()"
+                      class="btn-game-primary w-full py-4 px-6 text-sm sm:text-base flex items-center justify-center gap-2.5 tracking-wider uppercase">
+                <span>🚀</span> <span>CREAR NUEVA SALA</span>
+              </button>
+
+              <button onclick="uiShowJoin()"
+                      class="btn-game-secondary w-full py-3.5 px-6 text-sm flex items-center justify-center gap-2 tracking-wider uppercase">
+                <span>🔑</span> <span>UNIRSE CON CÓDIGO</span>
+              </button>
+            </div>
+
+            <div class="pt-3 border-t border-[#203a5e] text-center">
+              <button onclick="uiShowRules()" class="text-xs text-[#00e5a3] hover:text-white py-1 transition font-mono inline-flex items-center gap-1.5 font-bold">
+                <span>📖</span> <span>Manual de Operaciones & Reglas</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
-    <!-- ==================== VISTA 2: UNIRSE ==================== -->
-    <section id="view-join" class="space-y-4 hidden">
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Código de 4 dígitos</label>
-        <input id="inputCode" type="tel" maxlength="4" placeholder="••••" class="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-xl py-3 text-center text-3xl font-mono tracking-widest text-amber-400 focus:outline-none transition">
+    <!-- ==================== VIEW 2: RULES ==================== -->
+    <section id="view-rules" class="view-section hidden space-y-6">
+      <div class="flex items-center justify-between border-b-2 border-[#203a5e] pb-3">
+        <button onclick="uiShowHome()" class="btn-game-secondary text-xs font-mono font-bold flex items-center gap-1.5 px-3.5 py-2">
+          ← Volver al Menú
+        </button>
+        <h2 class="text-sm sm:text-base font-black font-display text-[#00e5a3] uppercase tracking-wider">Protocolos de Navegación</h2>
+        <div class="w-16"></div>
       </div>
-      <button onclick="uiJoinRoom()" class="w-full bg-emerald-500 active:bg-emerald-600 text-slate-950 font-black py-3.5 rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition">
-        ENTRAR AHORA
-      </button>
-      <button onclick="uiShowHome()" class="w-full text-slate-400 text-xs py-2 hover:text-white">
-        ← Volver al inicio
-      </button>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
+        <div class="game-panel p-4 rounded-xl border-2 border-[#203a5e] flex gap-3.5 items-start">
+          <div class="text-2xl p-2 rounded-xl bg-[#0a1320] border border-[#00e5a3]/40 text-[#00e5a3] flex-shrink-0">1️⃣</div>
+          <div>
+            <h3 class="font-bold font-display text-white text-sm mb-1">Palabra Clave Asignada</h3>
+            <p>Todos los tripulantes reciben la misma palabra secreta. El <strong class="text-[#ff8c32]">impostor</strong> no la conoce y debe deducirla sobre la marcha.</p>
+          </div>
+        </div>
+
+        <div class="game-panel p-4 rounded-xl border-2 border-[#203a5e] flex gap-3.5 items-start">
+          <div class="text-2xl p-2 rounded-xl bg-[#0a1320] border border-cyan-500/40 text-cyan-400 flex-shrink-0">2️⃣</div>
+          <div>
+            <h3 class="font-bold font-display text-white text-sm mb-1">Testimonio por Turno</h3>
+            <p>En su turno, cada participante debe decir <strong class="text-white">una única pista sutil</strong> en voz alta y marcar su testimonio como <strong class="text-[#00e5a3]">"Listo"</strong>.</p>
+          </div>
+        </div>
+
+        <div class="game-panel p-4 rounded-xl border-2 border-[#203a5e] flex gap-3.5 items-start">
+          <div class="text-2xl p-2 rounded-xl bg-[#0a1320] border border-slate-600/40 text-slate-300 flex-shrink-0">3️⃣</div>
+          <div>
+            <h3 class="font-bold font-display text-white text-sm mb-1">Ronda 1: Análisis y Sospechas</h3>
+            <p>En la primera ronda nadie puede votar. Su propósito es calibrar dudas, vacilaciones y pistas sospechosas de los demás.</p>
+          </div>
+        </div>
+
+        <div class="game-panel p-4 rounded-xl border-2 border-[#203a5e] flex gap-3.5 items-start">
+          <div class="text-2xl p-2 rounded-xl bg-[#0a1320] border border-[#ff8c32]/40 text-[#ff8c32] flex-shrink-0">4️⃣</div>
+          <div>
+            <h3 class="font-bold font-display text-white text-sm mb-1">Ronda 2: Reunión de Votación</h3>
+            <p>Al completar el ciclo en la ronda 2, se activa la <strong class="text-[#ff8c32]">Reunión de Emergencia</strong>. Cada tripulante emitirá su voto secreto o saltará la votación (Skip).</p>
+          </div>
+        </div>
+
+        <div class="game-panel p-4 rounded-xl border-2 border-[#203a5e] flex gap-3.5 items-start md:col-span-2">
+          <div class="text-2xl p-2 rounded-xl bg-[#0a1320] border border-[#00e5a3]/40 text-[#00e5a3] flex-shrink-0">👁️</div>
+          <div>
+            <h3 class="font-bold font-display text-white text-sm mb-1">Hold-to-Reveal (Privacidad Total)</h3>
+            <p>Mantén presionado el botón biométrico en cualquier momento para ver tu palabra arriba. Al soltar el dedo o ratón, <strong class="text-[#00e5a3]">desaparece instantáneamente</strong> para proteger la confidencialidad de tu pantalla.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center pt-2">
+        <button onclick="uiShowHome()" class="btn-game-secondary px-6 py-3 text-xs sm:text-sm">
+          ← Entendido, volver al Menú
+        </button>
+      </div>
     </section>
 
-    <!-- ==================== VISTA 3: LOBBY ==================== -->
-    <section id="view-lobby" class="space-y-4 hidden">
-      <!-- Tarjeta del Código y botón WhatsApp -->
-      <div class="bg-gradient-to-b from-slate-800/90 to-slate-950 p-4 rounded-2xl border border-slate-700/80 text-center relative">
-        <span class="text-[10px] uppercase tracking-widest font-bold text-slate-400">Código de Sala</span>
-        <div id="lblRoomCode" class="text-4xl font-black font-mono tracking-widest text-amber-400 my-1">----</div>
-        
-        <div class="flex gap-2 justify-center mt-2">
-          <button onclick="shareWhatsApp()" class="flex items-center gap-1.5 bg-emerald-600 active:bg-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition">
-            <span>💬</span> Invitar por WhatsApp
+    <!-- ==================== VIEW 3: JOIN ==================== -->
+    <section id="view-join" class="view-section hidden">
+      <div class="max-w-md mx-auto space-y-6">
+        <div class="flex items-center justify-between border-b-2 border-[#203a5e] pb-3">
+          <button onclick="uiShowHome()" class="btn-game-secondary text-xs font-mono font-bold flex items-center gap-1.5 px-3 py-1.5">
+            ← Volver
           </button>
-          <button onclick="copyRoomLink()" class="flex items-center gap-1.5 bg-slate-700 active:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-200 transition">
-            <span>🔗</span> Copiar link
+          <h2 class="text-sm font-black font-display text-[#00e5a3] uppercase tracking-wider">Unirse a Sala</h2>
+          <div class="w-16"></div>
+        </div>
+
+        <div class="game-panel p-6 sm:p-8 rounded-2xl border-2 border-[#203a5e] text-center space-y-5 shadow-lg">
+          <div>
+            <label class="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">Ingresa el Código de 4 dígitos</label>
+            <input id="inputCode" type="tel" maxlength="4" placeholder="••••"
+                   class="w-full bg-[#0a1320] border-2 border-[#203a5e] focus:border-[#00e5a3] rounded-xl py-4 text-center text-4xl font-mono tracking-[0.4em] text-[#00e5a3] focus:outline-none focus:ring-2 focus:ring-[#00e5a3]/30 transition shadow-inner font-black">
+          </div>
+
+          <button onclick="uiJoinRoom()"
+                  class="btn-game-primary w-full py-4 text-sm sm:text-base uppercase tracking-wider">
+            🚀 INGRESAR A LA NAVE
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 4: LOBBY ==================== -->
+    <section id="view-lobby" class="view-section hidden space-y-6">
+      <!-- Layout en 2 columnas para PC / Tablets -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+
+        <!-- Columna Izquierda: Código de sala y ajustes -->
+        <div class="md:col-span-6 lg:col-span-6 space-y-5">
+          <!-- Room Code Card -->
+          <div class="game-panel p-6 rounded-2xl border-2 border-[#203a5e] text-center shadow-lg relative overflow-hidden">
+            <div class="absolute top-3 right-3 game-pill bg-[#0a1320] text-[#00e5a3] border-[#00e5a3]/50">
+              SALA ACTIVA
+            </div>
+            <span class="text-[10px] uppercase font-mono tracking-[0.25em] font-bold text-slate-400">Código de Nave</span>
+            <div id="lblRoomCode" class="text-5xl font-mono font-black tracking-[0.3em] text-[#00e5a3] my-2">----</div>
+            <p class="text-xs text-slate-300 mb-4 font-sans">Comparte este código con tus amigos para que se unan a la tripulación</p>
+            <div class="flex gap-2.5 justify-center">
+              <button onclick="shareWhatsApp()" class="btn-game-primary flex items-center gap-2 px-4 py-2.5 text-xs">
+                <span>💬</span> <span>WhatsApp</span>
+              </button>
+              <button onclick="copyRoomLink()" class="btn-game-secondary flex items-center gap-2 px-4 py-2.5 text-xs">
+                <span>📋</span> <span>Copiar Enlace</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Host Settings -->
+          <div id="hostSettings" class="hidden game-panel p-5 rounded-2xl border-2 border-[#203a5e] space-y-3.5 shadow-md">
+            <div class="text-xs font-bold font-display uppercase tracking-wider text-[#00e5a3] flex items-center gap-2">
+              <span>⚙️</span> <span>Ajustes de Partida (Comandante)</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <label class="block text-[11px] font-mono text-slate-300 mb-1">Categoría</label>
+                <select id="selectCategory" class="w-full bg-[#0a1320] border-2 border-[#203a5e] text-[#00e5a3] font-bold rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#00e5a3]">
+                  <option value="random">🎲 Aleatoria (Todo el banco)</option>
+                  <option value="lugares">🏖️ Lugares</option>
+                  <option value="comida">🍕 Comidas</option>
+                  <option value="objetos">📱 Objetos</option>
+                  <option value="profesiones">👨‍🚀 Profesiones</option>
+                  <option value="cine">🎬 Cine y Series</option>
+                  <option value="deportes">⚽ Deportes</option>
+                  <option value="animales">🐾 Animales</option>
+                  <option value="paises">🌍 Países</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-mono text-slate-300 mb-1">Duración (Rondas)</label>
+                <select id="selectRounds" class="w-full bg-[#0a1320] border-2 border-[#203a5e] text-[#00e5a3] font-bold rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#00e5a3]">
+                  <option value="2">2 Rondas (Rápida)</option>
+                  <option value="3" selected>3 Rondas (Recomendado)</option>
+                  <option value="4">4 Rondas</option>
+                  <option value="5">5 Rondas</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-mono text-slate-300 mb-1">Tiempo por Pista</label>
+                <select id="selectTurnTime" class="w-full bg-[#0a1320] border-2 border-[#203a5e] text-[#00e5a3] font-bold rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#00e5a3]">
+                  <option value="0">Sin tiempo límite</option>
+                  <option value="30">30 Segundos</option>
+                  <option value="45" selected>45 Segundos</option>
+                  <option value="60">60 Segundos</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-mono text-slate-300 mb-1">Cantidad de Impostores</label>
+                <select id="selectImpostors" class="w-full bg-[#0a1320] border-2 border-[#203a5e] text-[#00e5a3] font-bold rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#00e5a3]">
+                  <option value="1" selected>1 Impostor</option>
+                  <option value="2">2 Impostores (4+ jug.)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna Derecha: PLAYER STATUS (COMO EN LA IMAGEN DE REFERENCIA) -->
+        <div class="md:col-span-6 lg:col-span-6 space-y-5">
+          <div class="game-panel p-5 rounded-2xl border-2 border-[#203a5e] shadow-md space-y-3">
+            <div class="flex items-center justify-between border-b-2 border-[#203a5e] pb-2.5">
+              <span class="text-xs font-black font-mono uppercase tracking-wider text-white flex items-center gap-2">
+                <span>👥</span> <span>PLAYER STATUS: TRIPULACIÓN</span>
+              </span>
+              <span id="lblCount" class="game-pill bg-[#0a1320] text-[#00e5a3] border-[#00e5a3]/40">0</span>
+            </div>
+
+            <ul id="listPlayers" class="space-y-2 max-h-56 sm:max-h-72 overflow-y-auto pr-1 font-sans"></ul>
+          </div>
+
+          <!-- Acciones de inicio / espera -->
+          <div id="boxHostControls" class="hidden">
+            <button onclick="hostStartMatch()"
+                    class="btn-game-primary w-full py-4 px-6 text-sm sm:text-base flex items-center justify-center gap-2 uppercase tracking-wider">
+              <span>🎭</span> <span>¡ASIGNAR ROLES Y COMENZAR!</span>
+            </button>
+            <p class="text-center text-[11px] text-slate-400 mt-2 font-mono">Mínimo sugerido: 3 tripulantes</p>
+          </div>
+
+          <div id="boxGuestWaiting" class="text-center py-4 game-panel rounded-xl border border-[#203a5e]">
+            <div class="inline-flex items-center gap-2.5 bg-[#0a1320] px-4 py-2 rounded-full border border-[#203a5e]">
+              <div class="w-2.5 h-2.5 rounded-full bg-[#00e5a3] animate-pulse"></div>
+              <span class="text-xs sm:text-sm text-slate-300 font-mono">Esperando orden del comandante...</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 5: GAMEPLAY & TURNS (ROLE) ==================== -->
+    <section id="view-role" class="view-section hidden space-y-6">
+
+      <!-- Navigation & Round Info Bar -->
+      <div class="flex items-center justify-between bg-[#0a1320] px-5 py-3 rounded-xl border-2 border-[#203a5e] shadow-sm">
+        <div class="flex items-center gap-2.5">
+          <span class="game-pill bg-[#14243b] text-[#ff8c32] border-[#ff8c32]/50">GAME PHASE: TESTIMONIOS</span>
+          <span id="lblRound" class="game-pill bg-[#14243b] text-[#00e5a3] border-[#00e5a3]/50">Ronda 1 / 3</span>
+        </div>
+
+        <div id="hostCancelBtnSlot">
+          <button id="btnHostResetMidGame" onclick="confirmResetToLobby()" class="hidden text-xs font-mono font-bold text-[#ff8c32] bg-[#0a1320] hover:bg-[#14243b] px-3.5 py-1.5 rounded-xl border-2 border-[#ff8c32]/40 btn-press">
+            ↺ Reiniciar sala
           </button>
         </div>
       </div>
 
-      <!-- Ajustes de Anfitrión (Categoría y Tiempo) -->
-      <div id="hostSettings" class="hidden bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-2">
-        <div class="flex items-center justify-between text-xs">
-          <span class="font-bold text-slate-300">Categoría:</span>
-          <select id="selectCategory" class="bg-slate-800 border border-slate-700 text-amber-300 font-semibold rounded-lg px-2 py-1 focus:outline-none text-xs">
-            <option value="lugares">Lugares Cotidianos</option>
-            <option value="comida">Comidas y Bebidas</option>
-            <option value="objetos">Objetos Comunes</option>
-            <option value="profesiones">Profesiones</option>
-            <option value="cine">Películas y Series</option>
-          </select>
-        </div>
-        <div class="flex items-center justify-between text-xs">
-          <span class="font-bold text-slate-300">Tiempo de Debate:</span>
-          <select id="selectTimer" class="bg-slate-800 border border-slate-700 text-amber-300 font-semibold rounded-lg px-2 py-1 focus:outline-none text-xs">
-            <option value="180">3 Minutos</option>
-            <option value="240">4 Minutos</option>
-            <option value="300">5 Minutos</option>
-            <option value="120">2 Minutos (Rápido)</option>
-          </select>
-        </div>
-      </div>
+      <!-- Layout en 2 columnas para PC -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-      <!-- Lista de Jugadores -->
-      <div>
-        <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-          <span>Jugadores en sala</span>
-          <span id="lblCount" class="text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md">0</span>
+        <!-- Columna Izquierda: Acción del turno y secreto -->
+        <div class="lg:col-span-7 space-y-5">
+
+          <!-- PERSISTENT HOLD-TO-REVEAL BIOMETRIC SCANNER -->
+          <div class="game-panel p-4 rounded-2xl border-2 border-[#203a5e] shadow-md">
+            <div id="btnHoldSecret"
+                 class="w-full py-4 px-5 rounded-xl bg-[#0a1320] hover:bg-[#14243b] border-2 border-[#00e5a3] flex items-center justify-center gap-3.5 cursor-pointer active:scale-[0.98] transition select-none shadow-md"
+                 style="touch-action: none;">
+              <span class="text-2xl sm:text-3xl text-[#00e5a3]">🔏</span>
+              <div class="text-left">
+                <div class="text-xs sm:text-sm font-black font-display text-[#00e5a3] uppercase tracking-wider">MANTÉN PRESIONADO AQUÍ</div>
+                <div class="text-[11px] text-slate-300 font-sans">para ver tu palabra en el visor superior (solo mientras mantienes presionado)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MEETING / TURN TIMER PANEL (COMO EN LA IMAGEN DE REFERENCIA) -->
+          <div id="turnCard" class="game-panel p-6 rounded-2xl border-2 border-[#203a5e] relative overflow-hidden shadow-md">
+            <div class="flex items-center justify-between gap-4">
+              <div class="text-left space-y-1">
+                <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-[#ff8c32]">TURNO DE DAR PISTA:</span>
+                <div id="lblCurrentTurn" class="text-white font-black font-display text-2xl sm:text-3xl flex items-center gap-2">--</div>
+                <div id="turnSubtitle" class="text-xs sm:text-sm text-slate-300 pt-1 font-sans"></div>
+              </div>
+
+              <!-- Digital Timer Box -->
+              <div id="timerContainer" class="timer-digital-box px-4 py-2.5 flex flex-col items-center justify-center flex-shrink-0 text-center">
+                <span class="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">TIEMPO</span>
+                <span id="timerText" class="font-mono font-black text-2xl sm:text-3xl text-[#00e5a3]">45</span>
+                <svg class="hidden"><path id="timerCircle"></path></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Clue Helper -->
+          <div id="clueHelpBox" class="game-panel-dark p-3.5 rounded-xl border border-[#203a5e] text-xs text-slate-300 flex items-center gap-2 font-sans">
+            <span class="text-[#ff8c32]">💡</span>
+            <span><em>Consejo: menciona una propiedad, uso o contexto sin revelar la palabra directa.</em></span>
+          </div>
+
+          <!-- MY TURN READY ACTION -->
+          <div id="myTurnActionContainer">
+            <button id="btnReady" onclick="markReady()"
+                    class="btn-game-primary w-full py-4 sm:py-5 text-sm sm:text-base uppercase tracking-wider flex items-center justify-center gap-2">
+              <span>✅</span> <span>YA DI MI PISTA — MARCAR LISTO</span>
+            </button>
+          </div>
+
+          <!-- WAITING ON OTHER PLAYER -->
+          <div id="waitOtherActionContainer" class="hidden game-panel p-5 rounded-xl border border-[#203a5e] text-center">
+            <span class="text-xs sm:text-sm font-medium text-slate-300 font-sans">
+              Escuchando atentamente la pista de <strong id="waitPlayerName" class="text-[#00e5a3] font-display text-base">--</strong>...
+            </span>
+          </div>
+
         </div>
-        <ul id="listPlayers" class="space-y-1.5 max-h-40 overflow-y-auto pr-1"></ul>
-      </div>
 
-      <!-- Controles Anfitrión / Espera Invitado -->
-      <div id="boxHostControls" class="hidden pt-1">
-        <button onclick="hostStartMatch()" class="w-full bg-amber-500 active:bg-amber-600 text-slate-950 font-black py-3.5 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition">
-          ¡REPARTIR ROLES!
-        </button>
-        <p class="text-center text-[11px] text-slate-500 mt-1.5">Se recomienda jugar con al menos 3 personas</p>
-      </div>
+        <!-- Columna Derecha: PLAYER STATUS LIST (COMO EN LA IMAGEN) -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="game-panel p-5 rounded-2xl border-2 border-[#203a5e] shadow-md space-y-3">
+            <div class="flex items-center justify-between border-b-2 border-[#203a5e] pb-2.5">
+              <span class="text-xs font-mono font-black uppercase tracking-wider text-white">PLAYER STATUS: PISTAS</span>
+              <span id="roundCycleLabel" class="game-pill bg-[#0a1320] text-[#00e5a3] border-[#00e5a3]/40">Inició: --</span>
+            </div>
 
-      <div id="boxGuestWaiting" class="text-center py-2 text-xs text-amber-400 font-medium animate-pulse-subtle">
-        Esperando que el anfitrión comience...
+            <div id="playersTurnList" class="space-y-2 max-h-72 overflow-y-auto pr-1 font-sans"></div>
+          </div>
+
+          <!-- Host Force Advance -->
+          <div id="hostTurnBypassBox" class="hidden pt-1">
+            <button onclick="hostForceVoting()" class="btn-game-secondary w-full text-xs font-mono text-[#ff8c32] py-2.5 font-bold flex items-center justify-center gap-2">
+              <span>⚡</span> <span>Abrir Reunión de Votación (Comandante)</span>
+            </button>
+          </div>
+        </div>
+
       </div>
     </section>
 
-    <!-- ==================== VISTA 4: FASE DE ROL (SECRETO) ==================== -->
-    <section id="view-role" class="space-y-4 hidden text-center">
-      <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-xs text-slate-400">
-        Turno de iniciar el debate: <br>
-        <strong id="lblStarter" class="text-amber-400 text-sm">--</strong>
+    <!-- ==================== VIEW 6: VOTING (EMERGENCY MEETING) ==================== -->
+    <section id="view-vote" class="view-section hidden space-y-6">
+      <!-- HEADER DE REUNIÓN DE EMERGENCIA (IDÉNTICO A LA REFERENCIA) -->
+      <div class="text-center border-b-2 border-[#ff8c32]/40 pb-4">
+        <div class="game-pill bg-[#0a1320] text-[#ff8c32] border-[#ff8c32] mb-2">
+          GAME PHASE: DISCUSSION & VOTING
+        </div>
+        <h2 class="text-xl sm:text-3xl font-black font-display text-white uppercase tracking-wider">
+          🚨 ¿QUIÉN ES EL IMPOSTOR?
+        </h2>
+        <span id="voteRoundBadge" class="text-xs font-mono text-slate-400">Ronda 2 de 3</span>
       </div>
 
-      <!-- Tarjeta Hold-to-Reveal -->
-      <div id="cardSecret" 
-           onmousedown="showSecretCard()" onmouseup="hideSecretCard()" 
-           ontouchstart="showSecretCard(event)" ontouchend="hideSecretCard(event)"
-           class="h-48 rounded-2xl border-2 border-dashed border-slate-700 bg-slate-950 flex flex-col items-center justify-center p-4 cursor-pointer active:border-amber-400 transition select-none relative">
-        
-        <div id="secretCover" class="flex flex-col items-center justify-center space-y-2">
-          <span class="text-3xl">🔒</span>
-          <span class="text-sm font-bold text-slate-300 uppercase tracking-wide">Mantén presionado</span>
-          <span class="text-[11px] text-slate-500">para ver tu palabra secreta</span>
-        </div>
-
-        <div id="secretReveal" class="hidden flex flex-col items-center justify-center">
-          <span id="roleBadge" class="text-xs uppercase font-black px-2.5 py-0.5 rounded-md mb-2"></span>
-          <div id="roleMainWord" class="text-2xl font-black tracking-wide"></div>
-          <p id="roleSubHint" class="text-xs text-slate-300 mt-2 max-w-xs leading-relaxed"></p>
+      <!-- Quick Peek reminder button during voting -->
+      <div class="max-w-md mx-auto">
+        <div id="btnHoldSecretVote"
+             class="w-full py-3 px-4 rounded-xl bg-[#0a1320] border-2 border-[#00e5a3] text-center cursor-pointer select-none hover:bg-[#14243b] transition btn-press shadow-sm"
+             style="touch-action: none;">
+          <span class="text-xs sm:text-sm font-bold font-display text-[#00e5a3] flex items-center justify-center gap-2">
+            <span>👁️</span> <span>Mantén presionado para recordar tu palabra</span>
+          </span>
         </div>
       </div>
 
-      <!-- Botón para ir al debate -->
-      <button onclick="uiGoToDebate()" class="w-full bg-slate-800 active:bg-slate-700 text-white font-bold py-3 rounded-xl border border-slate-700 active:scale-95 transition text-xs">
-        Entendido, ir al Debate y Temporizador →
-      </button>
-    </section>
-
-    <!-- ==================== VISTA 5: DEBATE Y TEMPORIZADOR ==================== -->
-    <section id="view-debate" class="space-y-4 hidden text-center">
-      <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
-        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tiempo de Discusión</span>
-        <div id="lblTimer" class="text-5xl font-mono font-black text-amber-400 my-2">03:00</div>
-        <p class="text-xs text-slate-400">Hagan preguntas sutiles entre ustedes para pillar al impostor.</p>
+      <div class="text-center text-xs sm:text-sm text-slate-300 font-sans">
+        Selecciona al tripulante sospechoso por quien deseas emitir tu acusación:
       </div>
 
-      <div class="grid grid-cols-2 gap-2">
-        <button onclick="uiPeekAgain()" class="w-full bg-slate-800 active:bg-slate-700 text-slate-300 text-xs font-bold py-3 rounded-xl border border-slate-700">
-          👀 Recordar mi rol
-        </button>
-        <button onclick="uiStartVotingPhase()" class="w-full bg-red-600 active:bg-red-700 text-white text-xs font-black py-3 rounded-xl shadow-lg shadow-red-600/20">
-          🗳️ Ir a Votación
+      <!-- Cuadrícula de sospechosos -->
+      <div id="votingList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 font-sans"></div>
+
+      <!-- Botón de Salto de Voto (SKIP en Naranja como en la referencia) -->
+      <div id="skipVoteContainer" class="max-w-md mx-auto pt-2">
+        <button onclick="castVote('SKIP')"
+                class="btn-game-warning w-full py-3.5 text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+          <span>🤷</span> <span>SALTAR VOTO (SKIP / NO SOSPECHO)</span>
         </button>
       </div>
-    </section>
 
-    <!-- ==================== VISTA 6: VOTACIÓN ==================== -->
-    <section id="view-vote" class="space-y-4 hidden">
-      <div class="text-center">
-        <h2 class="text-lg font-black text-red-400">¿QUIÉN ES EL IMPOSTOR?</h2>
-        <p class="text-xs text-slate-400">Toca el nombre del sospechoso para votar.</p>
+      <div id="votingWaitNotice" class="hidden max-w-md mx-auto text-center text-xs sm:text-sm text-[#00e5a3] font-mono font-bold p-4 bg-[#0a1320] border-2 border-[#00e5a3] rounded-xl">
+        ✓ Voto registrado en la computadora de la nave. Esperando al resto...
       </div>
 
-      <div id="votingList" class="space-y-2"></div>
-
-      <div id="votingWaitNotice" class="hidden text-center text-xs text-emerald-400 font-semibold p-2 bg-emerald-950/40 border border-emerald-800 rounded-xl">
-        ✓ Voto emitido. Esperando al resto...
-      </div>
-
-      <div id="hostForceReveal" class="hidden pt-2">
-        <button onclick="hostFinishVoting()" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs active:scale-95">
-          Cerrar Votación y Revelar
+      <div id="hostForceReveal" class="hidden max-w-md mx-auto pt-2">
+        <button onclick="hostFinishVoting()"
+                class="btn-game-secondary w-full py-3 text-xs sm:text-sm">
+          ⚡ Cerrar Votación Ahora (Comandante)
         </button>
       </div>
     </section>
 
-    <!-- ==================== VISTA 7: REVELACIÓN FINAL ==================== -->
-    <section id="view-results" class="space-y-4 hidden text-center">
-      <div id="resultBox" class="p-5 rounded-2xl border-2">
-        <span class="text-4xl block mb-1">🎭</span>
-        <span class="text-xs uppercase font-bold text-slate-400">El Impostor era:</span>
-        <h2 id="lblImpostorName" class="text-2xl font-black text-red-400 my-1">--</h2>
-        <div class="mt-2 text-xs text-slate-300 border-t border-slate-700/60 pt-2">
-          Palabra Secreta: <strong id="lblSecretWordReveal" class="text-emerald-400">--</strong>
+    <!-- ==================== VIEW 7: ROUND RESULTS ==================== -->
+    <section id="view-round-results" class="view-section hidden space-y-6 text-center">
+      <div class="max-w-xl mx-auto space-y-5">
+        <div class="text-4xl text-[#00e5a3]">📊</div>
+        <h2 class="text-base sm:text-xl font-black font-display text-white uppercase tracking-wider">
+          Recuento de Votos de la Reunión
+        </h2>
+
+        <div id="roundVoteResults" class="space-y-2 text-xs sm:text-sm text-left font-sans"></div>
+
+        <div id="roundVerdict" class="p-5 rounded-xl border-2 text-sm sm:text-base font-bold font-sans shadow-md"></div>
+
+        <div id="hostRoundControls" class="hidden pt-2">
+          <button onclick="hostNextRound()"
+                  class="btn-game-primary w-full py-4 text-sm sm:text-base uppercase tracking-wider">
+            ▶️ Continuar a Siguiente Ronda
+          </button>
+        </div>
+
+        <div id="guestRoundWaiting" class="text-center text-xs sm:text-sm text-[#00e5a3] py-3 game-panel rounded-xl border border-[#203a5e] font-mono">
+          Esperando que el comandante avance de ronda...
         </div>
       </div>
+    </section>
 
-      <div>
-        <h3 class="text-xs uppercase font-bold text-slate-400 mb-2">Resultados de Votos</h3>
-        <div id="voteResultsList" class="space-y-1 text-xs"></div>
-      </div>
+    <!-- ==================== VIEW 8: FINAL RESULTS ==================== -->
+    <section id="view-results" class="view-section hidden space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
 
-      <div id="hostPlayAgain" class="hidden pt-2">
-        <button onclick="hostResetMatch()" class="w-full bg-amber-500 active:bg-amber-600 text-slate-950 font-black py-3.5 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition">
-          JUGAR OTRA RONDA
-        </button>
+        <!-- Columna Izquierda: Revelación del caso -->
+        <div class="md:col-span-6 space-y-5 text-center">
+          <div id="resultBox" class="game-panel p-6 rounded-2xl border-2 border-rose-500/50 text-center shadow-xl">
+            <span id="resultEmoji" class="text-6xl block mb-2">🎭</span>
+            <span class="game-pill bg-[#0a1320] text-rose-400 border-rose-500/50 mb-2">
+              IDENTIDAD REVELADA
+            </span>
+            <div class="text-[11px] uppercase font-mono tracking-widest text-slate-300 mt-2">El Impostor era:</div>
+            <h2 id="lblImpostorName" class="text-3xl sm:text-4xl font-black font-display text-rose-400 my-2">--</h2>
+            <div class="mt-4 pt-4 border-t border-[#203a5e] text-xs sm:text-sm text-slate-200 font-sans">
+              Palabra Secreta de Nave: <strong id="lblSecretWordReveal" class="text-[#00e5a3] font-display text-base sm:text-lg">--</strong>
+            </div>
+          </div>
+
+          <div id="winnerAnnouncement" class="p-4 rounded-xl text-sm sm:text-base font-bold font-display shadow-lg"></div>
+        </div>
+
+        <!-- Columna Derecha: Puntuaciones -->
+        <div class="md:col-span-6 space-y-5">
+          <div class="game-panel p-6 rounded-2xl border-2 border-[#203a5e] shadow-md">
+            <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-white mb-3 flex items-center gap-2">
+              <span>🏆</span> <span>Puntuaciones de la Tripulación</span>
+            </h3>
+            <div id="scoreBoard" class="space-y-2 text-xs sm:text-sm font-sans"></div>
+          </div>
+
+          <div id="hostPlayAgain" class="hidden space-y-3 pt-1">
+            <button onclick="hostResetMatch()"
+                    class="btn-game-primary w-full py-4 text-sm sm:text-base uppercase tracking-wider">
+              🔄 JUGAR OTRA MISIÓN
+            </button>
+            <button onclick="confirmResetToLobby()"
+                    class="btn-game-secondary w-full py-3.5 text-xs sm:text-sm uppercase tracking-wider">
+              📁 Volver a la Sala de Espera
+            </button>
+          </div>
+
+          <div id="guestPlayAgain" class="hidden text-center py-4 game-panel rounded-xl border border-[#203a5e]">
+            <span class="text-xs sm:text-sm text-[#00e5a3] font-mono">Esperando decisión del comandante para otra misión...</span>
+          </div>
+
+          <button onclick="confirmLeaveMatch()" class="w-full text-slate-400 text-xs py-2 hover:text-white transition font-mono">
+            ← Salir al Menú Principal
+          </button>
+        </div>
+
       </div>
     </section>
 
   </main>
 
+  <!-- FOOTER -->
+  <footer class="relative z-10 mt-5 text-[11px] text-slate-400 text-center font-mono tracking-wider">
+    IMPOSTOR · STARSHIP AURORA · TACTICAL MULTIPLAYER P2P
+  </footer>
+
   <script>
     /* =====================================================================
-       BANCO DE PALABRAS POR CATEGORÍA
+       BANCO DE PALABRAS EXTENSO (8 CATEGORÍAS + ALEATORIO)
        ===================================================================== */
     const CATEGORIES = {
       lugares: [
-        "Playa", "Aeropuerto", "Hospital", "Cine", "Restaurante", "Gimnasio",
-        "Supermercado", "Biblioteca", "Estadio de Fútbol", "Circo", "Banco",
-        "Hotel de Lujo", "Museo", "Zoológico", "Crucero", "Estación de Metro",
-        "Termas", "Mall", "Campamento", "Parque de Diversiones"
+        "Playa","Aeropuerto","Hospital","Cine","Restaurante","Gimnasio","Supermercado",
+        "Biblioteca","Estadio de Fútbol","Circo","Banco","Hotel de Lujo","Museo","Zoológico",
+        "Crucero","Estación de Metro","Termas","Mall","Campamento","Parque de Diversiones",
+        "Iglesia","Casino","Peluquería","Gasolinera","Cementerio","Acuario","Lavandería",
+        "Planetario","Karaoke","Escape Room","Pista de Patinaje","Feria Libre","Puerto",
+        "Volcán","Cueva Escondida","Isla Desierta","Castillo Antiguo"
       ],
       comida: [
-        "Pizza", "Completo", "Empanada", "Hamburguesa", "Sushi", "Tacos",
-        "Cazuela", "Asado", "Helado", "Pastel de Choclo", "Sopaipillas",
-        "Chocolate", "Ceviche", "Lasaña", "Chorrillana", "Sandía"
+        "Pizza","Completo","Empanada","Hamburguesa","Sushi","Tacos","Cazuela","Asado",
+        "Helado","Pastel de Choclo","Sopaipillas","Chocolate","Ceviche","Lasaña",
+        "Chorrillana","Sandía","Paella","Ramen","Nachos","Dona","Waffles","Churros",
+        "Pisco Sour","Alfajor","Arepa","Humita","Croissant","Kebab","Dim Sum","Burrito",
+        "Tiramisú","Brownie","Tallarines con Salsa","Manzana Confitada"
       ],
       objetos: [
-        "Teléfono Móvil", "Guitarra", "Bicicleta", "Paraguas", "Reloj Despertador",
-        "Cámara Fotográfica", "Mochila", "Microondas", "Audífonos", "Zapatillas",
-        "Linterna", "Telescopio", "Monopatín", "Plancha"
+        "Teléfono Móvil","Guitarra","Bicicleta","Paraguas","Reloj Despertador","Cámara",
+        "Mochila","Microondas","Audífonos","Zapatillas","Linterna","Telescopio",
+        "Monopatín","Plancha","Espejo","Brújula","Extintor","Candado","Paracaídas",
+        "Dron","Máquina de Coser","Patines","Aspiradora","Caña de Pescar","Globo Terráqueo",
+        "Billetera","Maleta de Viaje","Termo de Café","Control Remoto"
       ],
       profesiones: [
-        "Médico", "Astronauta", "Bombero", "Profesor", "Piloto de Avión",
-        "Chef de Cocina", "Detective Privado", "Mecánico", "Abogado",
-        "Arquitecto", "Futbolista", "Científico", "Carpintero"
+        "Médico","Astronauta","Bombero","Profesor","Piloto de Avión","Chef","Detective",
+        "Mecánico","Abogado","Arquitecto","Futbolista","Científico","Carpintero",
+        "Veterinario","Mago","Payaso","DJ","Fotógrafo","Arqueólogo","Buzo Marino",
+        "Cirujano","Taxista","Cartero","Electricista","Panadero","Locutor de Radio",
+        "Guardaespaldas","Domador de Leones","Cantante Famoso"
       ],
       cine: [
-        "Titanic", "Harry Potter", "Star Wars", "Jurassic Park", "El Rey León",
-        "Avatar", "Spider-Man", "Batman", "Shrek", "Toy Story", "Avengers"
+        "Titanic","Harry Potter","Star Wars","Jurassic Park","El Rey León","Avatar",
+        "Spider-Man","Batman","Shrek","Toy Story","Avengers","Matrix","Frozen",
+        "Piratas del Caribe","El Señor de los Anillos","Rápido y Furioso","Coco",
+        "Mi Pobre Angelito","Volver al Futuro","Forrest Gump","IT","Inception",
+        "Gladiador","Rocky","Indiana Jones","Misión Imposible"
+      ],
+      deportes: [
+        "Fútbol","Tenis","Natación","Basketball","Boxeo","Surf","Skate","Golf",
+        "Voleibol","Rugby","Esgrima","Karate","Ciclismo","Snowboard","Ping Pong",
+        "Béisbol","Lucha Libre","Fórmula 1","Parkour","Escalada","Arquería","Hockey"
+      ],
+      animales: [
+        "Pingüino","Elefante","Delfín","Águila","Camaleón","Medusa","Canguro",
+        "Pulpo","Tucán","Lobo","Oso Polar","Tiburón Blanco","Koala","Flamenco",
+        "Tortuga Gigante","Colibrí","Orangután","Escorpión","Mantarraya","Cebra",
+        "Jirafa","Pavo Real","Murciélago","Axolote"
+      ],
+      paises: [
+        "Japón","Brasil","Egipto","Australia","Noruega","México","India","Italia",
+        "Canadá","Sudáfrica","Tailandia","Grecia","Rusia","Perú","Islandia","Cuba",
+        "Marruecos","Corea del Sur","Argentina","Chile","Colombia","España","Francia",
+        "Alemania","Portugal"
       ]
     };
 
     /* =====================================================================
-       SONIDOS NATIVOS SINTETIZADOS (Web Audio API)
+       AUDIO SYNTHESIZER (Web Audio API)
        ===================================================================== */
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playBeep(freq = 440, type = 'sine', duration = 0.1) {
+    let audioCtx = null;
+    function ensureAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    function playTone(freq = 440, type = 'sine', duration = 0.1, vol = 0.05) {
       try {
+        ensureAudio();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = type;
         osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
@@ -277,41 +958,197 @@
         osc.stop(audioCtx.currentTime + duration);
       } catch (e) {}
     }
-
-    function soundClick() { playBeep(600, 'sine', 0.05); }
-    function soundStart() { 
-      playBeep(440, 'triangle', 0.1); 
-      setTimeout(() => playBeep(880, 'triangle', 0.2), 100);
-      if (navigator.vibrate) navigator.vibrate([40, 60, 80]);
+    function soundClick() { playTone(680, 'sine', 0.04, 0.03); }
+    function soundStart() {
+      playTone(440, 'triangle', 0.1, 0.04);
+      setTimeout(() => playTone(554, 'triangle', 0.1, 0.04), 90);
+      setTimeout(() => playTone(659, 'triangle', 0.12, 0.05), 180);
+      setTimeout(() => playTone(880, 'triangle', 0.25, 0.07), 270);
+      if (navigator.vibrate) navigator.vibrate([40, 50, 40, 50, 70]);
     }
-    function soundReveal() {
-      playBeep(300, 'sawtooth', 0.2);
-      setTimeout(() => playBeep(220, 'sawtooth', 0.4), 180);
-      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    function soundReady() {
+      playTone(740, 'sine', 0.08, 0.04);
+      if (navigator.vibrate) navigator.vibrate(20);
+    }
+    function soundTick() { playTone(800, 'triangle', 0.02, 0.02); }
+    function soundAlert() {
+      playTone(330, 'sawtooth', 0.15, 0.04);
+      setTimeout(() => playTone(240, 'sawtooth', 0.25, 0.04), 140);
+      if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+    }
+    function soundWin() {
+      [440, 554, 659, 880, 1108].forEach((f, i) => {
+        setTimeout(() => playTone(f, 'triangle', 0.2, 0.04), i * 110);
+      });
     }
 
     /* =====================================================================
-       ESTADO GLOBAL Y PERSISTENCIA
+       FONDO ESPACIAL AMBIENTAL (ESTRELLAS TITILANTES & CURVATURA PLANETARIA)
+       ===================================================================== */
+    (function initAmbientBackground() {
+      const canvas = document.getElementById('ambient-canvas');
+      const ctx = canvas.getContext('2d');
+      let w, h;
+      let stars = [];
+
+      function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+        stars = [];
+        for (let i = 0; i < 90; i++) {
+          stars.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            r: Math.random() * 1.6 + 0.4,
+            alpha: Math.random() * 0.7 + 0.2,
+            dAlpha: (Math.random() * 0.015 + 0.005) * (Math.random() > 0.5 ? 1 : -1)
+          });
+        }
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+
+        // Curvatura planetaria en la esquina inferior derecha (estilo Among Us / Sci-Fi HUD)
+        const planetGrad = ctx.createRadialGradient(w * 0.92, h * 0.95, 30, w * 0.92, h * 0.95, Math.max(w, h) * 0.6);
+        planetGrad.addColorStop(0, 'rgba(14, 165, 233, 0.28)');
+        planetGrad.addColorStop(0.35, 'rgba(6, 182, 212, 0.12)');
+        planetGrad.addColorStop(0.7, 'rgba(2, 6, 23, 0.03)');
+        planetGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = planetGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Estrellas titilantes
+        stars.forEach(s => {
+          s.alpha += s.dAlpha;
+          if (s.alpha > 0.95 || s.alpha < 0.2) s.dAlpha *= -1;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(226, 232, 240, ${s.alpha})`;
+          ctx.fill();
+        });
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    /* =====================================================================
+       EFECTO CONFETI
+       ===================================================================== */
+    function launchConfetti() {
+      const colors = ['#38bdf8','#f43f5e','#10b981','#fbbf24','#818cf8'];
+      for (let i = 0; i < 65; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        el.style.left = Math.random() * 100 + 'vw';
+        el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        el.style.animationDuration = (Math.random() * 2 + 1.6) + 's';
+        el.style.animationDelay = (Math.random() * 0.6) + 's';
+        el.style.width = (Math.random() * 7 + 5) + 'px';
+        el.style.height = (Math.random() * 7 + 5) + 'px';
+        if (Math.random() > 0.5) el.style.borderRadius = '50%';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 4200);
+      }
+    }
+
+    /* =====================================================================
+       MODAL DE CONFIRMACIÓN TEMÁTICO
+       ===================================================================== */
+    let modalConfirmCallback = null;
+
+    function openCustomModal({ icon = '🚪', title, message, confirmText = 'Aceptar', cancelText = 'Cancelar', isDanger = false, onConfirm }) {
+      ensureAudio();
+      soundClick();
+
+      document.getElementById('customModalIcon').innerText = icon;
+      document.getElementById('customModalTitle').innerText = title;
+      document.getElementById('customModalMessage').innerText = message;
+
+      const confirmBtn = document.getElementById('customModalConfirmBtn');
+      const cancelBtn = document.getElementById('customModalCancelBtn');
+
+      confirmBtn.innerText = confirmText;
+      cancelBtn.innerText = cancelText;
+
+      if (isDanger) {
+        confirmBtn.className = "btn-press w-full py-3 px-4 rounded-xl font-bold font-display text-xs sm:text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30";
+      } else {
+        confirmBtn.className = "btn-press w-full py-3 px-4 rounded-xl font-bold font-display text-xs sm:text-sm bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-lg shadow-cyan-500/25";
+      }
+
+      modalConfirmCallback = onConfirm;
+
+      confirmBtn.onclick = () => {
+        closeCustomModal();
+        if (typeof modalConfirmCallback === 'function') {
+          modalConfirmCallback();
+        }
+      };
+
+      const modal = document.getElementById('customModal');
+      const box = document.getElementById('customModalBox');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        box.classList.remove('scale-95');
+        box.classList.add('scale-100');
+      }, 10);
+    }
+
+    function closeCustomModal() {
+      const modal = document.getElementById('customModal');
+      const box = document.getElementById('customModalBox');
+      box.classList.remove('scale-100');
+      box.classList.add('scale-95');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        modalConfirmCallback = null;
+      }, 140);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !document.getElementById('customModal').classList.contains('hidden')) {
+        closeCustomModal();
+      }
+    });
+
+    /* =====================================================================
+       ESTADO GLOBAL
        ===================================================================== */
     let myUUID = localStorage.getItem('impostor_uuid');
     if (!myUUID) {
       myUUID = 'u_' + Math.random().toString(36).substring(2, 9);
       localStorage.setItem('impostor_uuid', myUUID);
     }
-
     let myName = localStorage.getItem('impostor_name') || "";
     let isHost = false;
     let roomCode = "";
     let peer = null;
     let hostConn = null;
-    let connections = new Map(); // uuid -> conn
-    let players = [];            // [{ uuid, name, avatar }]
-    let myRoleData = null;       // { isImpostor, word, starter }
-    let timerInterval = null;
-    let timeLeft = 180;
-    let votes = {};              // voterUUID -> suspectUUID
+    let connections = new Map();
+    let players = [];
+    let scores = {};
+    let myRoleData = null;
 
-    const AVATARS = ["🦊", "🐼", "🦁", "🐯", "🐨", "🐸", "🐙", "🐵", "🦄", "🦉"];
+    let gameActive = false;
+    let currentRound = 1;
+    let totalRounds = 3;
+    let turnOrder = [];
+    let starterUUID = null;
+    let currentTurnIndex = 0;
+    let readyPlayers = new Set();
+    let gameSecretWord = "";
+    let impostorUUIDs = [];
+    let votes = {};
+
+    let turnTimeLimit = 45;
+    let turnTimeLeft = 45;
+    let turnTimerInterval = null;
+
+    const AVATARS = ["🦊","🐼","🦁","🐯","🐨","🐸","🐙","🐵","🦄","🦉","🐺","🦅","🐧","🦎","🐬"];
     function getAvatar(uuid) {
       let sum = 0;
       for (let i = 0; i < uuid.length; i++) sum += uuid.charCodeAt(i);
@@ -319,30 +1156,84 @@
     }
 
     /* =====================================================================
-       INTERFAZ DE USUARIO (NAVEGACIÓN)
+       UI & NAVEGACIÓN
        ===================================================================== */
-    function setBadge(text, color = "bg-emerald-500") {
+    function setBadge(text, dotClass = "bg-emerald-400") {
       document.getElementById('connStatus').innerText = text;
-      document.getElementById('connDot').className = `w-2 h-2 rounded-full ${color}`;
+      document.getElementById('connDot').className = `w-2.5 h-2.5 rounded-full ${dotClass}`;
     }
 
     function showToast(msg, isError = false) {
       const toast = document.getElementById('toast');
       toast.innerText = msg;
-      toast.className = `mb-3 p-3 rounded-xl text-xs font-semibold text-center ${
-        isError ? 'bg-red-950/80 border border-red-500 text-red-300' : 'bg-amber-950/80 border border-amber-500 text-amber-300'
+      toast.className = `mb-4 p-3.5 rounded-2xl text-xs sm:text-sm font-semibold text-center border shadow-lg font-mono ${
+        isError ? 'bg-rose-950/80 border-rose-500/50 text-rose-300' : 'bg-slate-900/90 border-cyan-500/40 text-cyan-300'
       }`;
       toast.classList.remove('hidden');
-      setTimeout(() => toast.classList.add('hidden'), 4000);
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.add('hidden'), 3500);
     }
+
+    let previousViewBeforeRules = 'view-home';
 
     function switchView(viewId) {
-      const views = ['view-home', 'view-join', 'view-lobby', 'view-role', 'view-debate', 'view-vote', 'view-results'];
-      views.forEach(id => document.getElementById(id).classList.add('hidden'));
-      document.getElementById(viewId).classList.remove('hidden');
+      const views = ['view-home','view-rules','view-join','view-lobby','view-role','view-vote','view-round-results','view-results'];
+      views.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          if (id === viewId) el.classList.remove('hidden');
+          else el.classList.add('hidden');
+        }
+      });
+
+      // Mover activamente el botón verde / turquesa entre PLAY y REGLAS
+      const tabPlay = document.getElementById('navTabPlay');
+      const tabRules = document.getElementById('navTabRules');
+      if (tabPlay && tabRules) {
+        if (viewId === 'view-rules') {
+          tabRules.className = 'px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-extrabold font-display uppercase tracking-wider bg-[#00e5a3] text-[#081626] shadow-sm transition';
+          tabPlay.className = 'px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-bold font-display uppercase tracking-wider text-slate-400 hover:text-white transition';
+        } else {
+          tabPlay.className = 'px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-extrabold font-display uppercase tracking-wider bg-[#00e5a3] text-[#081626] shadow-sm transition';
+          tabRules.className = 'px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-bold font-display uppercase tracking-wider text-slate-400 hover:text-white transition';
+        }
+      }
+
+      const btnHeaderLeave = document.getElementById('btnHeaderLeave');
+      if (btnHeaderLeave) {
+        if (['view-lobby', 'view-role', 'view-vote', 'view-round-results'].includes(viewId)) {
+          btnHeaderLeave.classList.remove('hidden');
+        } else {
+          btnHeaderLeave.classList.add('hidden');
+        }
+      }
     }
 
-    function uiShowHome() { switchView('view-home'); }
+    function uiShowHome() {
+      soundClick();
+      if (previousViewBeforeRules && previousViewBeforeRules !== 'view-rules') {
+        switchView(previousViewBeforeRules);
+        previousViewBeforeRules = 'view-home';
+      } else if (gameActive) {
+        switchView('view-role');
+      } else if (roomCode) {
+        switchView('view-lobby');
+      } else {
+        switchView('view-home');
+      }
+    }
+
+    function uiShowRules() {
+      soundClick();
+      const currentVisible = ['view-home','view-join','view-lobby','view-role','view-vote','view-round-results','view-results'].find(id => {
+        const el = document.getElementById(id);
+        return el && !el.classList.contains('hidden');
+      });
+      if (currentVisible && currentVisible !== 'view-rules') {
+        previousViewBeforeRules = currentVisible;
+      }
+      switchView('view-rules');
+    }
     function uiShowJoin() {
       const name = document.getElementById('inputName').value.trim();
       if (!name) return showToast("Escribe tu apodo primero", true);
@@ -352,11 +1243,124 @@
       switchView('view-join');
     }
 
+    function handleNavigationHome() {
+      if (gameActive || roomCode) {
+        confirmLeaveMatch();
+      } else {
+        uiShowHome();
+      }
+    }
+
+    function confirmLeaveMatch() {
+      openCustomModal({
+        icon: '🚪',
+        title: '¿Abandonar la partida?',
+        message: 'Estás a punto de desconectarte de la sala. Tu lugar quedará vacante y volverás al menú inicial.',
+        confirmText: 'Sí, salir de la sala',
+        cancelText: 'Permanecer',
+        isDanger: true,
+        onConfirm: () => {
+          if (isHost) {
+            broadcast({ type: 'HOST_DISCONNECTED' });
+          }
+          resetEverything();
+        }
+      });
+    }
+
+    function confirmResetToLobby() {
+      if (!isHost) return;
+      openCustomModal({
+        icon: '↺',
+        title: '¿Reiniciar sala de espera?',
+        message: 'Como anfitrión, devolverás a todos los jugadores a la sala de espera para reconfigurar la partida.',
+        confirmText: 'Sí, reiniciar sala',
+        cancelText: 'Continuar partida',
+        isDanger: false,
+        onConfirm: () => {
+          hostResetMatch();
+        }
+      });
+    }
+
+    function resetEverything() {
+      stopTurnTimer();
+      gameActive = false;
+      if (peer) { try { peer.destroy(); } catch(e) {} peer = null; }
+      hostConn = null;
+      connections = new Map();
+      players = [];
+      votes = {};
+      scores = {};
+      currentRound = 1;
+      turnOrder = [];
+      starterUUID = null;
+      currentTurnIndex = 0;
+      readyPlayers = new Set();
+      impostorUUIDs = [];
+      isHost = false;
+      roomCode = "";
+      setBadge("Listo", "bg-slate-500");
+      history.replaceState(null, '', window.location.pathname);
+      switchView('view-home');
+    }
+
     /* =====================================================================
-       CREACIÓN Y CONEXIÓN A SALA (PEERJS + STUN)
+       HOLD-TO-REVEAL EN LA PARTE SUPERIOR (OVERLAY)
+       ===================================================================== */
+    function setupTopPeekTrigger(btnElement) {
+      if (!btnElement) return;
+
+      const overlay = document.getElementById('topPeekOverlay');
+      const wordText = document.getElementById('topPeekWord');
+      const roleText = document.getElementById('topPeekRole');
+
+      const showOverlay = (e) => {
+        if (e) e.preventDefault();
+        ensureAudio();
+        soundClick();
+
+        if (myRoleData && myRoleData.isImpostor) {
+          wordText.innerText = "❓ ERES EL IMPOSTOR";
+          wordText.className = "text-3xl sm:text-5xl font-extrabold font-display text-rose-400 tracking-wide my-2";
+          roleText.innerText = "No conoces la palabra secreta. Escucha atentamente los testimonios e improvisa una pista verosímil.";
+          roleText.className = "text-xs sm:text-sm font-medium text-rose-200 max-w-md mx-auto";
+        } else if (myRoleData) {
+          wordText.innerText = myRoleData.word || "???";
+          wordText.className = "text-3xl sm:text-5xl font-extrabold font-display text-emerald-400 tracking-wide my-2";
+          roleText.innerText = "Tripulante: Esta es la palabra clave. Da una pista sutil para descubrir quién no la sabe.";
+          roleText.className = "text-xs sm:text-sm font-medium text-emerald-200 max-w-md mx-auto";
+        }
+        overlay.classList.add('active');
+        if (navigator.vibrate) navigator.vibrate(25);
+      };
+
+      const hideOverlay = (e) => {
+        if (e) e.preventDefault();
+        overlay.classList.remove('active');
+      };
+
+      const newBtn = btnElement.cloneNode(true);
+      btnElement.parentNode.replaceChild(newBtn, btnElement);
+
+      newBtn.addEventListener('mousedown', showOverlay);
+      newBtn.addEventListener('mouseup', hideOverlay);
+      newBtn.addEventListener('mouseleave', hideOverlay);
+      newBtn.addEventListener('touchstart', showOverlay, { passive: false });
+      newBtn.addEventListener('touchend', hideOverlay, { passive: false });
+      newBtn.addEventListener('touchcancel', hideOverlay, { passive: false });
+    }
+
+    function refreshPeekTriggers() {
+      setupTopPeekTrigger(document.getElementById('btnHoldSecret'));
+      setupTopPeekTrigger(document.getElementById('btnHoldSecretVote'));
+    }
+
+    /* =====================================================================
+       CONEXIÓN PEERJS (MULTIJUGADOR P2P)
        ===================================================================== */
     const peerConfig = {
-      debug: 1,
+      debug: 0,
       config: {
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
@@ -375,14 +1379,15 @@
 
       isHost = true;
       roomCode = Math.floor(1000 + Math.random() * 9000).toString();
-      setBadge("Creando...", "bg-amber-400 animate-ping");
+      setBadge("Creando...", "bg-amber-400 animate-pulse");
 
       if (peer) peer.destroy();
       peer = new Peer('imp-rm-' + roomCode, peerConfig);
 
       peer.on('open', () => {
-        setBadge("En Línea", "bg-emerald-500");
+        setBadge("En Línea", "bg-emerald-400");
         players = [{ uuid: myUUID, name: myName, avatar: getAvatar(myUUID) }];
+        scores[myUUID] = 0;
         document.getElementById('lblRoomCode').innerText = roomCode;
         document.getElementById('hostSettings').classList.remove('hidden');
         document.getElementById('boxHostControls').classList.remove('hidden');
@@ -398,21 +1403,28 @@
         conn.on('data', (data) => {
           if (data.type === 'JOIN') {
             remoteUUID = data.uuid;
-            if (connections.has(remoteUUID)) {
-              try { connections.get(remoteUUID).close(); } catch (e) {}
+            if (connections.has(data.uuid)) {
+              try { connections.get(data.uuid).close(); } catch(e) {}
             }
-            connections.set(remoteUUID, conn);
+            connections.set(data.uuid, conn);
 
-            const existIdx = players.findIndex(p => p.uuid === remoteUUID);
+            const existIdx = players.findIndex(p => p.uuid === data.uuid);
             if (existIdx !== -1) {
               players[existIdx].name = data.name;
             } else {
-              players.push({ uuid: remoteUUID, name: data.name, avatar: getAvatar(remoteUUID) });
+              players.push({ uuid: data.uuid, name: data.name, avatar: getAvatar(data.uuid) });
+              if (scores[data.uuid] === undefined) scores[data.uuid] = 0;
             }
-
             renderLobbyPlayers();
-            broadcast({ type: 'LOBBY_UPDATE', players });
-          } else if (data.type === 'VOTE') {
+            broadcast({ type: 'LOBBY_UPDATE', players, scores });
+          }
+          else if (data.type === 'READY_CLUE') {
+            readyPlayers.add(data.uuid);
+            broadcast({ type: 'READY_SYNC', readyList: [...readyPlayers] });
+            updatePlayersTurnListUI();
+            checkAllReady();
+          }
+          else if (data.type === 'VOTE') {
             votes[data.voter] = data.suspect;
             checkAllVotes();
           }
@@ -423,7 +1435,7 @@
             connections.delete(remoteUUID);
             players = players.filter(p => p.uuid !== remoteUUID);
             renderLobbyPlayers();
-            broadcast({ type: 'LOBBY_UPDATE', players });
+            broadcast({ type: 'LOBBY_UPDATE', players, scores });
           }
         };
         conn.on('close', drop);
@@ -431,14 +1443,18 @@
       });
 
       peer.on('error', (err) => {
-        if (err.type === 'unavailable-id') uiCreateRoom();
-        else showToast("Error de conexión: " + err.type, true);
+        if (err.type === 'unavailable-id') {
+          roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+          uiCreateRoom();
+        } else {
+          showToast("Error de conexión: " + err.type, true);
+        }
       });
     }
 
     function uiJoinRoom(forcedCode = null) {
       const code = forcedCode || document.getElementById('inputCode').value.trim();
-      if (code.length !== 4) return showToast("Código inválido de 4 dígitos", true);
+      if (code.length !== 4) return showToast("Código de 4 dígitos requerido", true);
       roomCode = code;
 
       if (!myName) {
@@ -452,7 +1468,7 @@
       }
 
       soundClick();
-      setBadge("Buscando...", "bg-amber-400 animate-ping");
+      setBadge("Buscando...", "bg-amber-400 animate-pulse");
 
       if (peer) peer.destroy();
       peer = new Peer(null, peerConfig);
@@ -461,7 +1477,7 @@
         hostConn = peer.connect('imp-rm-' + roomCode, { reliable: true });
 
         hostConn.on('open', () => {
-          setBadge("Conectado", "bg-emerald-500");
+          setBadge("Conectado", "bg-emerald-400");
           hostConn.send({ type: 'JOIN', uuid: myUUID, name: myName });
           document.getElementById('lblRoomCode').innerText = roomCode;
           document.getElementById('hostSettings').classList.add('hidden');
@@ -474,25 +1490,49 @@
         hostConn.on('data', (data) => {
           if (data.type === 'LOBBY_UPDATE') {
             players = data.players;
+            if (data.scores) scores = data.scores;
             renderLobbyPlayers();
-          } else if (data.type === 'GAME_START') {
+          }
+          else if (data.type === 'GAME_START') {
             soundStart();
-            myRoleData = data.roles[myUUID];
-            setupRoleCard(myRoleData, data.starter);
-            switchView('view-role');
-          } else if (data.type === 'START_VOTING') {
+            handleGameStart(data);
+          }
+          else if (data.type === 'TURN_UPDATE') {
+            handleTurnUpdate(data);
+          }
+          else if (data.type === 'READY_SYNC') {
+            readyPlayers = new Set(data.readyList);
+            updatePlayersTurnListUI();
+          }
+          else if (data.type === 'ROUND_ADVANCE_NOTICE') {
+            showToast(`¡Ronda ${data.round} completada! Iniciando Ronda ${data.round + 1}`);
+          }
+          else if (data.type === 'START_VOTING') {
             openVotingView();
-          } else if (data.type === 'FINAL_REVEAL') {
-            showFinalResults(data.impostorName, data.secretWord, data.results);
-          } else if (data.type === 'RESET_LOBBY') {
+          }
+          else if (data.type === 'ROUND_RESULT') {
+            showRoundResults(data);
+          }
+          else if (data.type === 'FINAL_REVEAL') {
+            showFinalResults(data);
+          }
+          else if (data.type === 'RESET_TO_LOBBY') {
+            scores = data.scores || scores;
+            gameActive = false;
+            stopTurnTimer();
             switchView('view-lobby');
+            showToast("Partida reabierta en la sala de espera");
+          }
+          else if (data.type === 'HOST_DISCONNECTED') {
+            showToast("El anfitrión cerró la sala", true);
+            setTimeout(() => resetEverything(), 1800);
           }
         });
 
         const disconnect = () => {
-          setBadge("Desconectado", "bg-red-500");
-          showToast("Conexión perdida con el anfitrión", true);
-          setTimeout(() => switchView('view-home'), 2500);
+          setBadge("Desconectado", "bg-rose-600");
+          showToast("Conexión perdida con la sala", true);
+          setTimeout(() => resetEverything(), 2500);
         };
         hostConn.on('close', disconnect);
         hostConn.on('error', disconnect);
@@ -500,7 +1540,7 @@
 
       peer.on('error', () => {
         showToast("No se encontró la sala " + roomCode, true);
-        setBadge("Error", "bg-red-500");
+        setBadge("Error", "bg-rose-600");
       });
     }
 
@@ -513,16 +1553,22 @@
     function renderLobbyPlayers() {
       const list = document.getElementById('listPlayers');
       list.innerHTML = "";
-      players.forEach(p => {
+      players.forEach((p, idx) => {
         const li = document.createElement('li');
-        li.className = "flex items-center justify-between bg-slate-950/70 border border-slate-800/80 px-3 py-2 rounded-xl text-xs";
         const isMe = p.uuid === myUUID;
+        const isLeader = idx === 0;
+        li.className = "flex items-center justify-between game-panel-dark px-4 py-3 rounded-xl border-2 border-[#203a5e] text-xs sm:text-sm";
         li.innerHTML = `
-          <div class="flex items-center gap-2">
-            <span class="text-base">${p.avatar}</span>
-            <span class="font-bold ${isMe ? 'text-amber-400' : 'text-slate-200'}">${p.name} ${isMe ? '(Tú)' : ''}</span>
+          <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-full bg-[#14243b] border-2 border-[#00e5a3] flex items-center justify-center text-base">${p.avatar}</span>
+            <span class="font-bold font-display ${isMe ? 'text-[#00e5a3]' : 'text-slate-200'}">
+              ${p.name}${isMe ? ' <span class="text-[10px] text-slate-400 font-mono">(Tú)</span>' : ''}
+            </span>
           </div>
-          ${p.uuid === players[0]?.uuid ? '<span class="text-[9px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded">LÍDER</span>' : ''}
+          <div class="flex items-center gap-2">
+            ${scores[p.uuid] !== undefined ? `<span class="game-pill bg-[#0a1320] text-cyan-300 border-cyan-500/30">${scores[p.uuid]} pts</span>` : ''}
+            ${isLeader ? '<span class="game-pill bg-[#0a1320] text-[#ff8c32] border-[#ff8c32]/50">HOST</span>' : '<span class="text-xs text-[#00e5a3] font-mono font-bold">LISTO ✓</span>'}
+          </div>
         `;
         list.appendChild(li);
       });
@@ -530,18 +1576,16 @@
     }
 
     /* =====================================================================
-       COMPARTIR ENLACE POR WHATSAPP
+       COMPARTIR SALA
        ===================================================================== */
     function getShareUrl() {
       return `${window.location.origin}${window.location.pathname}?sala=${roomCode}`;
     }
-
     function shareWhatsApp() {
       soundClick();
-      const text = encodeURIComponent(`🕵️‍♂️ ¡Únete a mi partida de *El Impostor*!\nEntra aquí directo: ${getShareUrl()}`);
+      const text = encodeURIComponent(`🕵️‍♂️ ¡Únete a mi partida de *El Impostor*!\nEntra directo aquí: ${getShareUrl()}`);
       window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
     }
-
     function copyRoomLink() {
       soundClick();
       navigator.clipboard.writeText(getShareUrl()).then(() => {
@@ -552,144 +1596,365 @@
     }
 
     /* =====================================================================
-       LÓGICA DEL JUEGO (REPARTO, ROLES, PRIVACIDAD)
+       LÓGICA DEL JUEGO (REPARTICIÓN DE ROLES Y TURNOS)
        ===================================================================== */
     function hostStartMatch() {
       if (players.length < 3) {
-        if (!confirm("Hay menos de 3 jugadores. ¿Quieres probar la partida de todas formas?")) return;
+        openCustomModal({
+          icon: '👥',
+          title: '¿Iniciar partida de prueba?',
+          message: 'Hay menos de 3 jugadores conectados. El juego es óptimo con al menos 3 personas. ¿Deseas iniciarla como prueba de todas formas?',
+          confirmText: 'Comenzar de prueba',
+          cancelText: 'Esperar más amigos',
+          isDanger: false,
+          onConfirm: () => {
+            executeHostStartMatch();
+          }
+        });
+        return;
       }
+      executeHostStartMatch();
+    }
 
+    function executeHostStartMatch() {
       soundStart();
+      gameActive = true;
+
       const catKey = document.getElementById('selectCategory').value;
-      const wordList = CATEGORIES[catKey] || CATEGORIES.lugares;
-      const secretWord = wordList[Math.floor(Math.random() * wordList.length)];
-      
-      const impostorIndex = Math.floor(Math.random() * players.length);
-      const starterIndex = Math.floor(Math.random() * players.length);
-      const starterName = players[starterIndex].name;
+      let wordList;
+      if (catKey === 'random') {
+        wordList = Object.values(CATEGORIES).flat();
+      } else {
+        wordList = CATEGORIES[catKey] || CATEGORIES.lugares;
+      }
+      gameSecretWord = wordList[Math.floor(Math.random() * wordList.length)];
+
+      totalRounds = parseInt(document.getElementById('selectRounds').value) || 3;
+      turnTimeLimit = parseInt(document.getElementById('selectTurnTime').value) || 45;
+      currentRound = 1;
+
+      const requestedImpostors = parseInt(document.getElementById('selectImpostors').value) || 1;
+      const numImpostors = Math.min(requestedImpostors, Math.max(1, Math.floor(players.length / 2)));
+      const shuffled = players.map(p => p.uuid).sort(() => Math.random() - 0.5);
+      impostorUUIDs = shuffled.slice(0, numImpostors);
+
+      turnOrder = [...players].sort(() => Math.random() - 0.5);
+      starterUUID = turnOrder[0].uuid;
+      currentTurnIndex = 0;
+      readyPlayers = new Set();
+      votes = {};
 
       const roles = {};
-      players.forEach((p, idx) => {
+      players.forEach(p => {
         roles[p.uuid] = {
-          isImpostor: idx === impostorIndex,
-          word: secretWord,
-          impostorName: players[impostorIndex].name
+          isImpostor: impostorUUIDs.includes(p.uuid),
+          word: gameSecretWord,
+          impostorNames: impostorUUIDs.map(uid => players.find(pl => pl.uuid === uid)?.name || '??')
         };
       });
 
+      const payload = {
+        type: 'GAME_START',
+        roles,
+        turnOrder: turnOrder.map(p => ({ uuid: p.uuid, name: p.name, avatar: p.avatar })),
+        starterUUID,
+        currentTurnIndex: 0,
+        currentRound: 1,
+        totalRounds,
+        turnTimeLimit,
+        impostorUUIDs
+      };
+
+      broadcast(payload);
+      handleGameStart(payload, roles);
+    }
+
+    function handleGameStart(data, rolesOverride = null) {
+      gameActive = true;
+      turnOrder = data.turnOrder || [];
+      starterUUID = data.starterUUID || turnOrder[0]?.uuid;
+      currentTurnIndex = data.currentTurnIndex || 0;
+      currentRound = data.currentRound || 1;
+      totalRounds = data.totalRounds || 3;
+      turnTimeLimit = data.turnTimeLimit !== undefined ? data.turnTimeLimit : 45;
+      readyPlayers = new Set();
       votes = {};
-      timeLeft = parseInt(document.getElementById('selectTimer').value) || 180;
 
-      // Enviar a todos
-      broadcast({ type: 'GAME_START', roles, starter: starterName });
-      myRoleData = roles[myUUID];
-      setupRoleCard(myRoleData, starterName);
-      switchView('view-role');
-    }
+      if (rolesOverride) {
+        myRoleData = rolesOverride[myUUID];
+      } else if (data.roles) {
+        myRoleData = data.roles[myUUID];
+      }
 
-    function setupRoleCard(data, starterName) {
-      document.getElementById('lblStarter').innerText = starterName;
-      const badge = document.getElementById('roleBadge');
-      const title = document.getElementById('roleMainWord');
-      const hint = document.getElementById('roleSubHint');
+      if (data.impostorUUIDs) impostorUUIDs = data.impostorUUIDs;
 
-      if (data.isImpostor) {
-        badge.innerText = "¡ERES EL IMPOSTOR!";
-        badge.className = "text-[11px] uppercase font-black px-2.5 py-0.5 rounded-md mb-2 bg-red-500 text-white";
-        title.innerText = "❓ PALABRA OCULTA";
-        title.className = "text-2xl font-black tracking-wide text-red-400";
-        hint.innerText = "No conoces el lugar/objeto. Escucha atentamente las preguntas de los demás y no te delates.";
+      if (isHost) {
+        document.getElementById('btnHostResetMidGame').classList.remove('hidden');
+        document.getElementById('hostTurnBypassBox').classList.remove('hidden');
       } else {
-        badge.innerText = "TRIPULANTE";
-        badge.className = "text-[11px] uppercase font-black px-2.5 py-0.5 rounded-md mb-2 bg-emerald-500 text-slate-950";
-        title.innerText = data.word;
-        title.className = "text-2xl font-black tracking-wide text-emerald-400";
-        hint.innerText = "Esta es la palabra secreta. Haz preguntas sutiles para pillar a quien no la sepa.";
+        document.getElementById('btnHostResetMidGame').classList.add('hidden');
+        document.getElementById('hostTurnBypassBox').classList.add('hidden');
       }
-    }
 
-    function showSecretCard(e) {
-      if (e) e.preventDefault();
-      soundClick();
-      document.getElementById('secretCover').classList.add('hidden');
-      document.getElementById('secretReveal').classList.remove('hidden');
-      if (navigator.vibrate) navigator.vibrate(20);
-    }
-
-    function hideSecretCard(e) {
-      if (e) e.preventDefault();
-      document.getElementById('secretCover').classList.remove('hidden');
-      document.getElementById('secretReveal').classList.add('hidden');
-    }
-
-    /* =====================================================================
-       FASE DE DEBATE Y TEMPORIZADOR
-       ===================================================================== */
-    function uiGoToDebate() {
-      soundClick();
-      switchView('view-debate');
-      if (!timerInterval) {
-        updateTimerDisplay();
-        timerInterval = setInterval(() => {
-          timeLeft--;
-          updateTimerDisplay();
-          if (timeLeft <= 0) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            uiStartVotingPhase();
-          }
-        }, 1000);
-      }
-    }
-
-    function updateTimerDisplay() {
-      const min = Math.floor(Math.max(0, timeLeft) / 60);
-      const sec = Math.max(0, timeLeft) % 60;
-      document.getElementById('lblTimer').innerText = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-    }
-
-    function uiPeekAgain() {
+      refreshPeekTriggers();
       switchView('view-role');
+      updateTurnUI();
     }
 
     /* =====================================================================
-       FASE DE VOTACIÓN
+       TURNO Y SISTEMA DE "LISTO"
        ===================================================================== */
-    function uiStartVotingPhase() {
-      soundClick();
-      if (isHost) {
-        broadcast({ type: 'START_VOTING' });
-      } else if (hostConn && hostConn.open) {
-        hostConn.send({ type: 'START_VOTING' });
+    function updateTurnUI() {
+      const currentPlayer = turnOrder[currentTurnIndex];
+      if (!currentPlayer) return;
+
+      document.getElementById('lblRound').innerText = `Ronda ${currentRound} de ${totalRounds}`;
+      document.getElementById('lblCurrentTurn').innerText = `${currentPlayer.avatar} ${currentPlayer.name}`;
+
+      const starterPlayer = turnOrder.find(p => p.uuid === starterUUID);
+      document.getElementById('roundCycleLabel').innerText = `Inició: ${starterPlayer ? starterPlayer.name : '--'}`;
+
+      const isMyTurn = currentPlayer.uuid === myUUID;
+      const myActionContainer = document.getElementById('myTurnActionContainer');
+      const waitActionContainer = document.getElementById('waitOtherActionContainer');
+      const turnCard = document.getElementById('turnCard');
+      const btnReady = document.getElementById('btnReady');
+
+      if (isMyTurn) {
+        turnCard.classList.add('turn-glow');
+        myActionContainer.classList.remove('hidden');
+        waitActionContainer.classList.add('hidden');
+        document.getElementById('turnSubtitle').innerHTML = '👉 <strong>¡Tienes el turno!</strong> Da tu pista en voz alta y presiona listo:';
+
+        btnReady.disabled = false;
+        btnReady.classList.remove('opacity-50', 'pointer-events-none');
+        btnReady.innerHTML = '<span>✅</span> <span>YA DI MI PISTA — MARCAR LISTO</span>';
+        btnReady.className = 'btn-game-primary w-full py-4 sm:py-5 text-sm sm:text-base uppercase tracking-wider flex items-center justify-center gap-2';
+      } else {
+        turnCard.classList.remove('turn-glow');
+        myActionContainer.classList.add('hidden');
+        waitActionContainer.classList.remove('hidden');
+        document.getElementById('waitPlayerName').innerText = currentPlayer.name;
+        document.getElementById('turnSubtitle').innerText = 'Escucha con atención la pista para descubrir al impostor.';
       }
-      openVotingView();
+
+      updatePlayersTurnListUI();
+      startTurnTimer();
     }
 
-    function openVotingView() {
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-      switchView('view-vote');
-      document.getElementById('votingWaitNotice').classList.add('hidden');
+    function updatePlayersTurnListUI() {
+      const container = document.getElementById('playersTurnList');
+      container.innerHTML = '';
+
+      turnOrder.forEach(p => {
+        const isReady = readyPlayers.has(p.uuid);
+        const isCurrent = turnOrder[currentTurnIndex]?.uuid === p.uuid;
+        const isStarter = p.uuid === starterUUID;
+
+        const div = document.createElement('div');
+        div.className = `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm transition ${
+          isCurrent ? 'bg-[#14243b] border-2 border-[#00e5a3] font-bold shadow-md' :
+          isReady ? 'game-panel-dark border-2 border-[#00e5a3]/40 text-slate-200' :
+          'game-panel-dark border-2 border-[#203a5e] text-slate-400'
+        }`;
+
+        div.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-full bg-[#14243b] border border-[#203a5e] flex items-center justify-center text-sm">${p.avatar}</span>
+            <span class="${isCurrent ? 'text-white font-bold' : isReady ? 'text-[#00e5a3]' : 'text-slate-300'}">
+              ${p.name} ${p.uuid === myUUID ? '<span class="text-[10px] text-slate-400 font-mono">(Tú)</span>' : ''}
+              ${isStarter ? '<span class="game-pill bg-[#0a1320] text-cyan-300 border-cyan-500/30 ml-1 py-0.5 px-1.5 text-[9px]">1º</span>' : ''}
+            </span>
+          </div>
+          <span class="text-xs font-mono">
+            ${isReady ? '<span class="text-[#00e5a3] flex items-center gap-1 font-bold">READY ✓</span>' : isCurrent ? '<span class="text-[#ff8c32] animate-pulse font-bold">HABLANDO 🎙️</span>' : '<span class="text-slate-500">EN ESPERA</span>'}
+          </span>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function markReady() {
+      soundReady();
+      readyPlayers.add(myUUID);
+
+      const btnReady = document.getElementById('btnReady');
+      btnReady.disabled = true;
+      btnReady.innerHTML = '<span>⏳</span> <span>PISTA REGISTRADA — ESPERANDO...</span>';
+      btnReady.className = 'btn-game-secondary w-full py-4 sm:py-5 text-sm sm:text-base uppercase tracking-wider flex items-center justify-center gap-2 opacity-60 pointer-events-none';
 
       if (isHost) {
-        document.getElementById('hostForceReveal').classList.remove('hidden');
+        broadcast({ type: 'READY_SYNC', readyList: [...readyPlayers] });
+        updatePlayersTurnListUI();
+        checkAllReady();
+      } else if (hostConn && hostConn.open) {
+        hostConn.send({ type: 'READY_CLUE', uuid: myUUID });
       }
+    }
+
+    function checkAllReady() {
+      if (!isHost) return;
+
+      if (readyPlayers.size >= turnOrder.length) {
+        onRoundCompleted();
+      } else {
+        for (let i = 0; i < turnOrder.length; i++) {
+          const nextIdx = (currentTurnIndex + 1 + i) % turnOrder.length;
+          if (!readyPlayers.has(turnOrder[nextIdx].uuid)) {
+            currentTurnIndex = nextIdx;
+            break;
+          }
+        }
+        broadcast({
+          type: 'TURN_UPDATE',
+          currentTurnIndex,
+          currentRound,
+          readyList: [...readyPlayers]
+        });
+        updateTurnUI();
+      }
+    }
+
+    function handleTurnUpdate(data) {
+      currentTurnIndex = data.currentTurnIndex;
+      currentRound = data.currentRound || currentRound;
+      if (data.readyList) readyPlayers = new Set(data.readyList);
+      switchView('view-role');
+      updateTurnUI();
+    }
+
+    function onRoundCompleted() {
+      if (!isHost) return;
+
+      if (currentRound >= 2) {
+        broadcast({ type: 'START_VOTING' });
+        openVotingView();
+      } else {
+        broadcast({ type: 'ROUND_ADVANCE_NOTICE', round: 1 });
+        showToast("¡Ronda 1 completada! Ahora comienza la Ronda 2 (Votación habilitada)");
+        setTimeout(() => {
+          advanceToNextClueRound();
+        }, 1500);
+      }
+    }
+
+    function advanceToNextClueRound() {
+      currentRound++;
+      readyPlayers = new Set();
+      const starterIdx = turnOrder.findIndex(p => p.uuid === starterUUID);
+      currentTurnIndex = starterIdx !== -1 ? starterIdx : 0;
+      votes = {};
+
+      const payload = {
+        type: 'TURN_UPDATE',
+        currentRound,
+        currentTurnIndex,
+        readyList: []
+      };
+      broadcast(payload);
+      handleTurnUpdate(payload);
+    }
+
+    function hostForceVoting() {
+      if (!isHost) return;
+      openCustomModal({
+        icon: '⚡',
+        title: '¿Abrir votación inmediata?',
+        message: '¿Deseas interrumpir las pistas de esta ronda y abrir ahora mismo la fase de votación para todos los jugadores?',
+        confirmText: 'Sí, abrir votación',
+        cancelText: 'Seguir con pistas',
+        isDanger: false,
+        onConfirm: () => {
+          broadcast({ type: 'START_VOTING' });
+          openVotingView();
+        }
+      });
+    }
+
+    /* =====================================================================
+       TEMPORIZADOR VISUAL CIRCULAR
+       ===================================================================== */
+    function startTurnTimer() {
+      stopTurnTimer();
+      const timerContainer = document.getElementById('timerContainer');
+      const timerText = document.getElementById('timerText');
+      const timerCircle = document.getElementById('timerCircle');
+
+      if (!turnTimeLimit || turnTimeLimit <= 0) {
+        timerContainer.classList.add('hidden');
+        return;
+      }
+
+      timerContainer.classList.remove('hidden');
+      turnTimeLeft = turnTimeLimit;
+      renderTimerProgress(turnTimeLeft, turnTimeLimit);
+
+      turnTimerInterval = setInterval(() => {
+        turnTimeLeft--;
+        renderTimerProgress(turnTimeLeft, turnTimeLimit);
+
+        if (turnTimeLeft <= 5 && turnTimeLeft > 0) {
+          soundTick();
+        }
+
+        if (turnTimeLeft <= 0) {
+          stopTurnTimer();
+          soundAlert();
+          if (turnOrder[currentTurnIndex]?.uuid === myUUID) {
+            markReady();
+          }
+        }
+      }, 1000);
+    }
+
+    function renderTimerProgress(timeLeft, total) {
+      const timerText = document.getElementById('timerText');
+      if (timerText) {
+        timerText.innerText = Math.max(0, timeLeft) < 10 ? `0${Math.max(0, timeLeft)}` : Math.max(0, timeLeft);
+        if (timeLeft <= 10) {
+          timerText.className = 'font-mono font-black text-2xl sm:text-3xl text-rose-400 animate-pulse';
+        } else if (timeLeft <= 20) {
+          timerText.className = 'font-mono font-black text-2xl sm:text-3xl text-[#ff8c32]';
+        } else {
+          timerText.className = 'font-mono font-black text-2xl sm:text-3xl text-[#00e5a3]';
+        }
+      }
+    }
+
+    function stopTurnTimer() {
+      if (turnTimerInterval) {
+        clearInterval(turnTimerInterval);
+        turnTimerInterval = null;
+      }
+    }
+
+    /* =====================================================================
+       FASE DE VOTACIÓN (RONDA 2+)
+       ===================================================================== */
+    function openVotingView() {
+      stopTurnTimer();
+      switchView('view-vote');
+      refreshPeekTriggers();
+
+      document.getElementById('votingWaitNotice').classList.add('hidden');
+      document.getElementById('voteRoundBadge').innerText = `Ronda ${currentRound} de ${totalRounds}`;
+
+      if (isHost) document.getElementById('hostForceReveal').classList.remove('hidden');
+      else document.getElementById('hostForceReveal').classList.add('hidden');
 
       const container = document.getElementById('votingList');
       container.innerHTML = "";
 
       players.forEach(p => {
-        if (p.uuid === myUUID) return; // No auto-votarse
+        if (p.uuid === myUUID) return;
         const btn = document.createElement('button');
-        btn.className = "w-full flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 text-left hover:border-red-500/50 active:scale-95 transition";
+        btn.className = "btn-press w-full flex items-center justify-between p-4 rounded-xl game-panel-dark border-2 border-[#203a5e] hover:border-[#00e5a3] text-left transition shadow-md group";
         btn.innerHTML = `
-          <div class="flex items-center gap-2.5">
-            <span class="text-xl">${p.avatar}</span>
-            <span class="font-bold text-sm text-slate-200">${p.name}</span>
+          <div class="flex items-center gap-3">
+            <span class="w-10 h-10 rounded-full bg-[#14243b] border-2 border-[#203a5e] group-hover:border-[#00e5a3] flex items-center justify-center text-xl transition-transform group-hover:scale-105">${p.avatar}</span>
+            <span class="font-bold font-display text-sm sm:text-base text-white">${p.name}</span>
           </div>
-          <span class="text-xs text-red-400 font-bold">Acusar 🎯</span>
+          <span class="btn-game-primary text-xs px-3.5 py-1.5 uppercase tracking-wider">VOTAR</span>
         `;
         btn.onclick = () => castVote(p.uuid);
         container.appendChild(btn);
@@ -699,6 +1964,7 @@
     function castVote(suspectUUID) {
       soundClick();
       document.getElementById('votingList').innerHTML = "";
+      document.getElementById('skipVoteContainer').classList.add('hidden');
       document.getElementById('votingWaitNotice').classList.remove('hidden');
 
       if (isHost) {
@@ -716,68 +1982,226 @@
     }
 
     function hostFinishVoting() {
-      soundReveal();
+      soundAlert();
+
       const tally = {};
       players.forEach(p => tally[p.uuid] = 0);
       Object.values(votes).forEach(sId => {
-        if (tally[sId] !== undefined) tally[sId]++;
+        if (sId !== 'SKIP' && tally[sId] !== undefined) {
+          tally[sId]++;
+        }
       });
 
-      const impostorEntry = players.find(p => myRoleData.impostorName === p.name);
-      const impostorName = myRoleData.impostorName;
-      const secretWord = myRoleData.word;
+      let maxVotes = 0;
+      let eliminated = null;
+      let tie = false;
 
-      const payload = {
-        impostorName,
-        secretWord,
-        results: players.map(p => ({
-          name: p.name,
-          avatar: p.avatar,
-          votes: tally[p.uuid] || 0
-        }))
-      };
+      players.forEach(p => {
+        const v = tally[p.uuid];
+        if (v > maxVotes) {
+          maxVotes = v;
+          eliminated = p;
+          tie = false;
+        } else if (v === maxVotes && v > 0) {
+          tie = true;
+        }
+      });
 
-      broadcast({ type: 'FINAL_REVEAL', ...payload });
-      showFinalResults(payload.impostorName, payload.secretWord, payload.results);
+      const impostorCaught = !tie && eliminated && impostorUUIDs.includes(eliminated.uuid);
+      const isLastRound = currentRound >= totalRounds;
+
+      const results = players.map(p => ({
+        uuid: p.uuid,
+        name: p.name,
+        avatar: p.avatar,
+        votes: tally[p.uuid] || 0,
+        isImpostor: impostorUUIDs.includes(p.uuid)
+      })).sort((a, b) => b.votes - a.votes);
+
+      if (impostorCaught || isLastRound) {
+        if (impostorCaught) {
+          players.forEach(p => {
+            if (!impostorUUIDs.includes(p.uuid)) scores[p.uuid] = (scores[p.uuid] || 0) + 2;
+          });
+        } else {
+          impostorUUIDs.forEach(uid => {
+            scores[uid] = (scores[uid] || 0) + 3;
+          });
+        }
+
+        const impostorNames = impostorUUIDs.map(uid => players.find(pl => pl.uuid === uid)?.name || '??');
+
+        const payload = {
+          type: 'FINAL_REVEAL',
+          impostorNames,
+          secretWord: gameSecretWord,
+          results,
+          scores,
+          impostorCaught,
+          eliminatedName: tie ? 'Empate' : (eliminated?.name || 'Nadie')
+        };
+        broadcast(payload);
+        showFinalResults(payload);
+      } else {
+        const payload = {
+          type: 'ROUND_RESULT',
+          results,
+          eliminatedName: tie ? 'Empate' : (eliminated?.name || 'Nadie'),
+          currentRound,
+          totalRounds
+        };
+        broadcast(payload);
+        showRoundResults(payload);
+      }
     }
 
-    function showFinalResults(impostorName, secretWord, results) {
-      soundReveal();
-      switchView('view-results');
-      document.getElementById('lblImpostorName').innerText = impostorName;
-      document.getElementById('lblSecretWordReveal').innerText = secretWord;
+    function showRoundResults(data) {
+      switchView('view-round-results');
 
-      const list = document.getElementById('voteResultsList');
-      list.innerHTML = "";
-      results.sort((a, b) => b.votes - a.votes).forEach(r => {
+      const container = document.getElementById('roundVoteResults');
+      container.innerHTML = '';
+      data.results.forEach(r => {
         const div = document.createElement('div');
-        div.className = "flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800";
+        div.className = "flex items-center justify-between p-3 rounded-xl game-panel-dark border-2 border-[#203a5e]";
         div.innerHTML = `
-          <span>${r.avatar} ${r.name}</span>
-          <span class="font-bold text-amber-400">${r.votes} ${r.votes === 1 ? 'voto' : 'votos'}</span>
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-full bg-[#14243b] border border-[#203a5e] flex items-center justify-center text-base">${r.avatar}</span>
+            <span class="font-bold text-white font-display">${r.name}</span>
+          </div>
+          <span class="font-mono font-bold text-[#00e5a3] bg-[#0a1320] px-2.5 py-1 rounded-lg border border-[#00e5a3]/30">${r.votes} ${r.votes === 1 ? 'voto' : 'votos'}</span>
         `;
-        list.appendChild(div);
+        container.appendChild(div);
+      });
+
+      const verdict = document.getElementById('roundVerdict');
+      verdict.innerHTML = `
+        <div class="text-slate-400 text-xs font-mono mb-1 uppercase tracking-wider">Resultado de la reunión:</div>
+        <div class="text-lg font-black font-display text-white">Más votado: <span class="text-[#ff8c32]">${data.eliminatedName}</span></div>
+        <div class="text-xs sm:text-sm text-slate-300 mt-1.5 font-normal">La misión continúa. Aún quedan testimonios por dar en la siguiente ronda.</div>
+      `;
+      verdict.className = "p-5 rounded-xl border-2 border-[#203a5e] bg-[#14243b] text-sm";
+
+      if (isHost) {
+        document.getElementById('hostRoundControls').classList.remove('hidden');
+        document.getElementById('guestRoundWaiting').classList.add('hidden');
+      } else {
+        document.getElementById('hostRoundControls').classList.add('hidden');
+        document.getElementById('guestRoundWaiting').classList.remove('hidden');
+      }
+    }
+
+    function hostNextRound() {
+      soundClick();
+      advanceToNextClueRound();
+    }
+
+    /* =====================================================================
+       RESULTADOS FINALES Y PUNTAJES
+       ===================================================================== */
+    function showFinalResults(data) {
+      soundAlert();
+      gameActive = false;
+      stopTurnTimer();
+      switchView('view-results');
+
+      const names = data.impostorNames || [data.impostorName];
+      document.getElementById('lblImpostorName').innerText = names.join(' & ');
+      document.getElementById('lblSecretWordReveal').innerText = data.secretWord;
+
+      if (data.scores) scores = data.scores;
+
+      const winAnnounce = document.getElementById('winnerAnnouncement');
+      if (data.impostorCaught) {
+        document.getElementById('resultEmoji').innerText = '🎉';
+        winAnnounce.innerHTML = '🏆 ¡Los <strong>TRIPULANTES</strong> descubrieron al impostor!';
+        winAnnounce.className = "p-4 rounded-xl text-sm sm:text-base font-black bg-[#0a1320] border-2 border-[#00e5a3] text-[#00e5a3] font-display";
+        launchConfetti();
+        soundWin();
+      } else {
+        document.getElementById('resultEmoji').innerText = '😈';
+        winAnnounce.innerHTML = '💀 ¡El <strong>IMPOSTOR</strong> saboteó la nave y gana la partida!';
+        winAnnounce.className = "p-4 rounded-xl text-sm sm:text-base font-black bg-[#0a1320] border-2 border-rose-500 text-rose-400 font-display";
+        if (impostorUUIDs.includes(myUUID)) {
+          launchConfetti();
+          soundWin();
+        }
+      }
+
+      const board = document.getElementById('scoreBoard');
+      board.innerHTML = '';
+      const sorted = [...players].sort((a, b) => (scores[b.uuid] || 0) - (scores[a.uuid] || 0));
+
+      sorted.forEach((p, idx) => {
+        const isImp = impostorUUIDs.includes(p.uuid);
+        const div = document.createElement('div');
+        div.className = `flex items-center justify-between p-3 rounded-xl border-2 ${
+          idx === 0 ? 'bg-[#14243b] border-[#00e5a3] font-bold' : 'game-panel-dark border-[#203a5e]'
+        }`;
+        div.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-full bg-[#0a1320] border border-[#203a5e] flex items-center justify-center text-sm">${idx === 0 ? '👑' : ''} ${p.avatar}</span>
+            <span class="${isImp ? 'text-rose-400 font-bold' : 'text-white font-semibold'}">${p.name}</span>
+            ${isImp ? '<span class="game-pill bg-[#0a1320] text-rose-400 border-rose-500/50 ml-1 py-0.5 px-2">IMPOSTOR</span>' : ''}
+          </div>
+          <span class="game-pill bg-[#0a1320] text-[#00e5a3] border-[#00e5a3]/40 font-mono">${scores[p.uuid] || 0} pts</span>
+        `;
+        board.appendChild(div);
       });
 
       if (isHost) {
         document.getElementById('hostPlayAgain').classList.remove('hidden');
+        document.getElementById('guestPlayAgain').classList.add('hidden');
+      } else {
+        document.getElementById('hostPlayAgain').classList.add('hidden');
+        document.getElementById('guestPlayAgain').classList.remove('hidden');
       }
     }
 
     function hostResetMatch() {
       soundClick();
       votes = {};
-      broadcast({ type: 'RESET_LOBBY' });
+      gameActive = false;
+      currentRound = 1;
+      readyPlayers = new Set();
+      stopTurnTimer();
+
+      broadcast({ type: 'RESET_TO_LOBBY', scores });
+      renderLobbyPlayers();
       switchView('view-lobby');
     }
 
     /* =====================================================================
-       INICIALIZACIÓN AUTOMÁTICA (AUTO-JOIN POR QUERY PARAM)
+       INICIALIZACIÓN POR URL (?sala=XXXX)
        ===================================================================== */
     window.addEventListener('DOMContentLoaded', () => {
       if (myName) {
         document.getElementById('inputName').value = myName;
       }
+
+      const inputName = document.getElementById('inputName');
+      if (inputName) {
+        inputName.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            uiCreateRoom();
+          }
+        });
+      }
+
+      const inputCode = document.getElementById('inputCode');
+      if (inputCode) {
+        inputCode.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            uiJoinRoom();
+          }
+        });
+        inputCode.addEventListener('input', () => {
+          if (inputCode.value.trim().length === 4) {
+            uiJoinRoom();
+          }
+        });
+      }
+
+      refreshPeekTriggers();
 
       const params = new URLSearchParams(window.location.search);
       const urlCode = params.get('sala');
@@ -786,8 +2210,15 @@
         if (myName) {
           uiJoinRoom(urlCode);
         } else {
-          uiShowJoin();
+          switchView('view-join');
         }
+      }
+    });
+
+    window.addEventListener('beforeunload', (e) => {
+      if (gameActive) {
+        e.preventDefault();
+        e.returnValue = '';
       }
     });
   </script>
